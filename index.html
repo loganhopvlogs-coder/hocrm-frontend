@@ -11,79 +11,100 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#0A0A0F;font-family:'DM Sans',sans-serif;color:#E8E8F0}
-::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:#111}::-webkit-scrollbar-thumb{background:#2a2a38;border-radius:2px}
-.tab-btn{background:none;border:none;color:#555;cursor:pointer;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;border-radius:8px;transition:all .2s;display:flex;align-items:center;gap:6px;white-space:nowrap}
-.tab-btn:hover{color:#ccc;background:rgba(255,255,255,.05)}.tab-btn.active{color:#fff;background:rgba(255,255,255,.1)}
-.card{background:#13131A;border:1px solid #1E1E2A;border-radius:14px;padding:20px}
-.btn-red{background:#E63946;color:#fff;border:none;border-radius:9px;padding:10px 18px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
-.btn-red:hover{background:#c8303c;transform:translateY(-1px)}.btn-red:disabled{opacity:.5;cursor:default;transform:none}
-.btn-sm{background:rgba(255,255,255,.07);color:#bbb;border:1px solid #2a2a38;border-radius:7px;padding:7px 13px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .18s}
-.btn-sm:hover{background:rgba(255,255,255,.12);color:#fff}
-.btn-green{background:#34C759;color:#fff;border:none;border-radius:9px;padding:10px 18px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
-.btn-green:hover{background:#28a745;transform:translateY(-1px)}
-.inp{background:#16161f;border:1px solid #252535;border-radius:9px;color:#e8e8f0;padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:13px;width:100%;outline:none;transition:border .2s}
-.inp:focus{border-color:#E63946}.inp::placeholder{color:#444}
-select.inp{cursor:pointer}textarea.inp{resize:vertical;min-height:100px}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
-.modal{background:#13131A;border:1px solid #252535;border-radius:18px;padding:28px;width:580px;max-width:100%;max-height:90vh;overflow-y:auto}
-.lead-row{display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;transition:background .15s;border-bottom:1px solid #14141e}
-.lead-row:hover{background:rgba(255,255,255,.03)}.lead-row.sel{background:rgba(230,57,70,.09);border-left:3px solid #E63946}
-.auth-bg{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 20% 50%,rgba(230,57,70,.15) 0%,transparent 60%),#0A0A0F;padding:24px}
-.auth-box{background:#111118;border:1px solid #1E1E2A;border-radius:22px;padding:40px 36px;width:420px;max-width:100%}
-.tag{display:inline-block;padding:2px 9px;border-radius:6px;font-size:11px;font-weight:700;background:rgba(230,57,70,.14);color:#E63946;border:1px solid rgba(230,57,70,.28)}
+body{font-family:'DM Sans',sans-serif}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{border-radius:2px;background:#2a2a38}
+.tab-btn{background:none;border:none;cursor:pointer;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;border-radius:8px;transition:all .2s;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.lead-row{display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;transition:background .15s;border-bottom-width:1px;border-bottom-style:solid}
+.auth-bg{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.auth-box{border-radius:22px;padding:40px 36px;width:420px;max-width:100%}
 .skeleton{background:linear-gradient(90deg,#1a1a24 25%,#222230 50%,#1a1a24 75%);background-size:1000px 100%;animation:shimmer 1.5s infinite;border-radius:6px;height:14px}
-th{text-align:left;padding:10px 14px;font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.7px;border-bottom:1px solid #1E1E2A;cursor:pointer;user-select:none;white-space:nowrap}
-th:hover{color:#aaa}td{padding:10px 14px;font-size:13px;border-bottom:1px solid #12121c;vertical-align:middle}
-tr:hover td{background:rgba(255,255,255,.018)}
-.notice{border-radius:10px;padding:11px 16px;font-size:13px;margin-bottom:14px}
-.notice.success{background:rgba(52,199,89,.1);border:1px solid rgba(52,199,89,.3);color:#34C759}
-.notice.error{background:rgba(230,57,70,.1);border:1px solid rgba(230,57,70,.3);color:#E63946}
-.notice.warn{background:rgba(255,149,0,.1);border:1px solid rgba(255,149,0,.3);color:#FF9500}
-.notice.info{background:rgba(10,132,255,.1);border:1px solid rgba(10,132,255,.3);color:#4da3ff}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes shimmer{0%{background-position:-1000px 0}100%{background-position:1000px 0}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 .spin{width:15px;height:15px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .65s linear infinite;display:inline-block;flex-shrink:0}
 .fu{animation:fadeUp .3s ease both}
+.pool-btn{animation:pulse 2s infinite}
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useMemo, useEffect } = React;
+const { useState, useMemo, useEffect, useRef } = React;
 
 const SUPA_URL = "https://dmeigygmmxwmkyniizzj.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtZWlneWdtbXh3bWt5bmlpenpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzU2NDEsImV4cCI6MjA4ODE1MTY0MX0.hTv4RICUBNWFNLsQEaZVqcbviqD0ZZSinwCzdSLRDJo";
 const sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
-const INVENTORY_URL = "https://hocrm-backend.onrender.com/inventory";
-const ALLOWED_DOMAINS = ["houseofcarscalgary.com","houseofcars.com"];
-const HOC_LOCATIONS = ["52 Street","Airdrie","Barlow Trail","Chinook","Cochrane","Deerfoot Meadows","MacLeod Trail","McKnight Blvd","Olympic Park","Edmonton","Lethbridge","Medicine Hat"];
-const STATUS_C = {Hot:{bg:"#E63946",text:"#fff"},Warm:{bg:"#FF9500",text:"#fff"},Cold:{bg:"#555",text:"#fff"}};
+const INV_URL = "https://hocrm-backend.onrender.com/inventory";
+const ALLOWED = ["houseofcarscalgary.com","houseofcars.com"];
+const LOCS = ["52 Street","Airdrie","Barlow Trail","Chinook","Cochrane","Deerfoot Meadows","MacLeod Trail","McKnight Blvd","Olympic Park","Edmonton","Lethbridge","Medicine Hat"];
+const STATUS_C = {Hot:"#E63946",Warm:"#FF9500",Cold:"#555"};
 const typeEmoji = t=>({Truck:"🛻",SUV:"🚙",Sedan:"🚗",Van:"🚐"}[t]||"🚗");
 const fmtCur = n=>n?"$"+Number(n).toLocaleString():"—";
 const fmtDate = d=>d?new Date(d).toLocaleDateString("en-CA",{month:"short",day:"numeric",year:"numeric"}):"—";
+const fmtKM = m=>m?String(m).replace(/\B(?=(\d{3})+(?!\d))/g,",")+(" KM"):"";
 
-function normalizeVehicle(v,i){
+const THEMES = {
+  dark:  {name:"Dark (Default)",bg:"#0A0A0F",surface:"#13131A",border:"#1E1E2A",text:"#E8E8F0",muted:"#555",accent:"#E63946",nav:"#0D0D14",input:"#16161f",inputBorder:"#252535"},
+  light: {name:"Light",         bg:"#F0F2F5",surface:"#FFFFFF", border:"#E0E0E8",text:"#111118",muted:"#888",accent:"#E63946",nav:"#FFFFFF", input:"#F5F5FA",inputBorder:"#D0D0DC"},
+  blue:  {name:"Midnight Blue", bg:"#050C1A",surface:"#0D1B2E",border:"#1A2E45",text:"#E8F0FF",muted:"#4A6080",accent:"#0A84FF",nav:"#070E1C",input:"#0A1525",inputBorder:"#1A2E45"},
+  green: {name:"Forest",        bg:"#060F0A",surface:"#0D1F12",border:"#1A3020",text:"#E0F0E8",muted:"#3A6045",accent:"#34C759",nav:"#070F08",input:"#0A1A0E",inputBorder:"#1A3020"},
+  purple:{name:"Violet",        bg:"#0A060F",surface:"#15101F",border:"#251A35",text:"#EEE8FF",muted:"#5A4070",accent:"#BF5AF2",nav:"#0C0812",input:"#130E1C",inputBorder:"#251A35"},
+  white: {name:"Clean White",   bg:"#FFFFFF", surface:"#F8F9FA",border:"#DEE2E6",text:"#212529",muted:"#6C757D",accent:"#E63946",nav:"#FFFFFF", input:"#FFFFFF", inputBorder:"#CED4DA"},
+};
+
+function getT(u){
+  const k = u?.theme?.mode||"dark";
+  return THEMES[k]||THEMES.dark;
+}
+
+function normalizeV(v,i){
   return {id:i+1,stock:v.stock||"HOC-"+i,vin:v.vin||"",year:v.year||0,make:v.make||"",model:v.model||"",
     price:v.price||0,mileage:v.mileage||"",location:v.location||"",type:v.bodyType||v.type||"",
     color:v.color||"",image:v.image||"",listingUrl:v.listingUrl||v.url||"",condition:v.condition||"Used"};
 }
 
-function App(){
-  // ── Auth ──────────────────────────────────────────────────────
-  const [screen,setScreen]   = useState("login");
-  const [user,setUser]       = useState(null);
-  const [tab,setTab]         = useState("dashboard");
-  const [lf,setLf]           = useState({email:"",password:""});
-  const [sf,setSf]           = useState({firstName:"",lastName:"",email:"",location:"",role:"Sales",password:"",confirm:""});
-  const [forgotEmail,setForgotEmail] = useState("");
-  const [authErr,setAuthErr] = useState("");
-  const [authMsg,setAuthMsg] = useState("");
-  const [authLoad,setAuthLoad] = useState(false);
-  const [showPw,setShowPw]   = useState(false);
+function buildAd(v, features, intro){
+  const feat = features||"• All-Wheel Drive\n• Leather Interior\n• Heated Seats\n• Backup Camera\n• Premium Sound\n• Dual-Zone Climate Control\n• Power Everything\n• Push-Button Start\n• Alloy Wheels";
+  const opening = intro||`Looking for a great ${v.type||"vehicle"} without breaking the bank? This ${v.year} ${v.make} ${v.model} delivers exactly that.`;
+  const colorLine = v.color?`${v.color} on ${v.color} `:"";
+  return `${v.year} ${v.make} ${v.model} ${colorLine}🔥 Stock #${v.stock} ${fmtKM(v.mileage)} ${fmtCur(v.price)} + GST
 
-  // ── Inventory ─────────────────────────────────────────────────
+${opening}
+
+Finished in ${v.color||"a great colour"}, this ${v.type||"vehicle"} brings sharp styling, smooth handling, and premium comfort together in one sharp package. Perfect for Alberta roads year-round.
+
+Loaded with features including:
+${feat}
+
+${fmtKM(v.mileage)?fmtKM(v.mileage)+" — p":"P"}riced aggressively at ${fmtCur(v.price)} + GST to reflect excellent value for the year and trim.
+
+Financing available O.A.C. All credit types welcome — good, bad, rebuilding, or great.
+
+AMVIC Licensed Dealer.
+
+Message today to book a test drive before it's gone!
+
+#HouseOfCars #${(v.make||"").replace(/\s/g,"")} #${(v.model||"").replace(/\s/g,"")} #UsedCars #Alberta #CarSales #HouseOfCars${(v.location||"").replace(/\s/g,"")}`;
+}
+
+function App(){
+  const [screen,setScreen] = useState("login");
+  const [user,setUser]     = useState(null);
+  const [tab,setTab]       = useState("dashboard");
+  const [T,setT]           = useState(THEMES.dark);
+  const [themeKey,setThemeKey] = useState("dark");
+
+  // Auth
+  const [lf,setLf]       = useState({email:"",password:""});
+  const [sf,setSf]       = useState({firstName:"",lastName:"",email:"",location:"",role:"Sales",password:"",confirm:""});
+  const [fgEmail,setFgEmail] = useState("");
+  const [aErr,setAErr]   = useState("");
+  const [aMsg,setAMsg]   = useState("");
+  const [aLoad,setALoad] = useState(false);
+  const [showPw,setShowPw] = useState(false);
+
+  // Inventory
   const [inv,setInv]         = useState([]);
   const [invLoad,setInvLoad] = useState(false);
   const [invErr,setInvErr]   = useState("");
@@ -92,51 +113,91 @@ function App(){
   const [syncMsg,setSyncMsg] = useState({t:"",type:""});
   const [iFilter,setIFilter] = useState("All");
   const [iLoc,setILoc]       = useState("All");
-  const [iSort,setISort]     = useState({col:"year",dir:"desc"});
+  const [iSort,setISort]     = useState({col:"price",dir:"desc"});
+  const [iSearch,setISearch] = useState("");
 
-  // ── Clients ───────────────────────────────────────────────────
-  const [clients,setClients]     = useState([]);
-  const [cLoad,setCLoad]         = useState(false);
-  const [selC,setSelC]           = useState(null);
-  const [addC,setAddC]           = useState(false);
-  const [editC,setEditC]         = useState(false);
-  const [cf,setCf]               = useState({name:"",phone:"",email:"",location:"",status:"Warm",notes:"",interested_in:"",paired_vehicle_stock:""});
+  // Clients
+  const [clients,setClients]   = useState([]);
+  const [cLoad,setCLoad]       = useState(false);
+  const [selC,setSelC]         = useState(null);
+  const [addC,setAddC]         = useState(false);
+  const [editC,setEditC]       = useState(false);
+  const [cf,setCf]             = useState({name:"",phone:"",email:"",location:"",status:"Warm",notes:"",interested_in:"",paired_vehicle_stock:""});
   const [pairModal,setPairModal] = useState(null);
-  const [cMsg,setCMsg]           = useState({t:"",type:""});
-  const [cSearch,setCSearch]     = useState("");
+  const [cMsg,setCMsg]         = useState({t:"",type:""});
+  const [cSearch,setCSearch]   = useState("");
+  const [vSearch,setVSearch]   = useState("");
+  const [poolNote,setPoolNote] = useState("");
 
-  // ── Posts ─────────────────────────────────────────────────────
-  const [posts,setPosts]     = useState([]);
-  const [pLoad,setPLoad]     = useState(false);
-  const [draftOpen,setDraftOpen]   = useState(false);
-  const [draftV,setDraftV]         = useState(null);
+  // Pool
+  const [pool,setPool]         = useState([]);
+  const [poolLoad,setPoolLoad] = useState(false);
+  const [poolMsg,setPoolMsg]   = useState({t:"",type:""});
+
+  // Posts
+  const [posts,setPosts]       = useState([]);
+  const [pLoad,setPLoad]       = useState(false);
+  const [draftOpen,setDraftOpen] = useState(false);
+  const [draftV,setDraftV]     = useState(null);
   const [draftTitle,setDraftTitle] = useState("");
   const [draftText,setDraftText]   = useState("");
-  const [vSearch,setVSearch]       = useState("");
-  const [pMsg,setPMsg]             = useState({t:"",type:""});
-  const [editPost,setEditPost]     = useState(null);
+  const [draftFeat,setDraftFeat]   = useState("");
+  const [draftIntro,setDraftIntro] = useState("");
+  const [draftImg,setDraftImg]     = useState("");
+  const [draftSearch,setDraftSearch] = useState("");
+  const [editPost,setEditPost] = useState(null);
+  const [pMsg,setPMsg]         = useState({t:"",type:""});
 
-  // ── Accounts ──────────────────────────────────────────────────
-  const [users,setUsers]     = useState([]);
-  const [uLoad,setULoad]     = useState(false);
-  const [rf,setRf]           = useState({firstName:"",lastName:"",email:"",location:"",role:"Sales",password:"",confirm:""});
-  const [rErr,setRErr]       = useState("");
-  const [rOk,setROk]         = useState(false);
-  const [rLoad,setRLoad]     = useState(false);
+  // Accounts
+  const [users,setUsers]       = useState([]);
+  const [uLoad,setULoad]       = useState(false);
+  const [rf,setRf]             = useState({firstName:"",lastName:"",email:"",location:"",role:"Sales",password:"",confirm:""});
+  const [rErr,setRErr]         = useState("");
+  const [rOk,setROk]           = useState(false);
+  const [rLoad,setRLoad]       = useState(false);
+  const [resetTarget,setResetTarget] = useState(null);
+  const [resetPw,setResetPw]   = useState("");
+  const [resetMsg,setResetMsg] = useState("");
 
-  // ── Data loaders ──────────────────────────────────────────────
+  // Notifs & settings
+  const [notifs,setNotifs]     = useState([]);
+  const [showNotifs,setShowNotifs] = useState(false);
+  const [settingsOpen,setSettingsOpen] = useState(false);
+  const notifRef = useRef(null);
+
+  // ── Styles ────────────────────────────────────────────────────
+  const card  = {background:T.surface,border:`1px solid ${T.border}`,borderRadius:14,padding:20};
+  const inp   = {background:T.input,border:`1px solid ${T.inputBorder}`,borderRadius:9,color:T.text,padding:"11px 14px",fontFamily:"'DM Sans',sans-serif",fontSize:13,width:"100%",outline:"none"};
+  const btnP  = {background:T.accent,color:"#fff",border:"none",borderRadius:9,padding:"10px 18px",fontFamily:"'DM Sans',sans-serif",fontSize:13,fontWeight:700,cursor:"pointer"};
+  const btnS  = {background:"rgba(128,128,128,.1)",color:T.text,border:`1px solid ${T.border}`,borderRadius:7,padding:"7px 13px",fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:500,cursor:"pointer"};
+  const nBase = {borderRadius:10,padding:"11px 16px",fontSize:13,marginBottom:14,border:"1px solid"};
+  const nOk   = {...nBase,background:"rgba(52,199,89,.1)",borderColor:"rgba(52,199,89,.3)",color:"#34C759"};
+  const nErr  = {...nBase,background:"rgba(230,57,70,.1)",borderColor:"rgba(230,57,70,.3)",color:"#E63946"};
+  const nInfo = {...nBase,background:"rgba(10,132,255,.1)",borderColor:"rgba(10,132,255,.3)",color:"#4da3ff"};
+  const nWarn = {...nBase,background:"rgba(255,149,0,.1)",borderColor:"rgba(255,149,0,.3)",color:"#FF9500"};
+
+  const isAdmin   = user?.role==="Admin";
+  const isManager = user?.role==="Manager";
+
+  function canSee(c){
+    if(isAdmin) return true;
+    if(isManager) return c.assigned_location===user?.location;
+    return c.created_by===user?.id;
+  }
+
+  // ── Loaders ───────────────────────────────────────────────────
   const loadInv = async(force=false)=>{
     if(force){setSyncing(true);setSyncMsg({t:"",type:""});}
     else{setInvLoad(true);setInvErr("");}
     try{
-      const r=await fetch(INVENTORY_URL);
+      const r=await fetch(INV_URL);
       if(!r.ok)throw new Error("API error "+r.status);
       const j=await r.json();
       if(!j.success)throw new Error(j.error||"Backend error");
-      if(!j.vehicles?.length)throw new Error("No vehicles — re-run your Apify scraper.");
-      setInv(j.vehicles.map(normalizeVehicle));
+      if(!j.vehicles?.length)throw new Error("No vehicles returned.");
+      setInv(j.vehicles.map(normalizeV));
       setSynced(new Date().toLocaleTimeString("en-CA",{hour:"2-digit",minute:"2-digit"}));
-      if(force)setSyncMsg({t:"✅ Synced! "+j.vehicles.length+" vehicles loaded.",type:"success"});
+      if(force)setSyncMsg({t:"✅ "+j.vehicles.length+" vehicles synced.",type:"success"});
     }catch(e){
       if(force)setSyncMsg({t:"❌ "+e.message,type:"error"});
       else setInvErr(e.message);
@@ -145,134 +206,151 @@ function App(){
       if(force)setTimeout(()=>setSyncMsg({t:"",type:""}),5000);
     }
   };
-
-  const loadClients = async()=>{
+  const loadClients=async()=>{
     setCLoad(true);
-    const {data}=await sb.from("clients").select("*").order("created_at",{ascending:false});
+    const{data}=await sb.from("clients").select("*").order("created_at",{ascending:false});
     if(data)setClients(data);
     setCLoad(false);
   };
-
-  const loadPosts = async()=>{
+  const loadPool=async()=>{
+    setPoolLoad(true);
+    const{data}=await sb.from("lead_pool")
+      .select("*, client:clients(*), adder:users!lead_pool_added_by_fkey(first_name,last_name,location)")
+      .eq("status","available").order("created_at",{ascending:false});
+    if(data)setPool(data);
+    setPoolLoad(false);
+  };
+  const loadPosts=async()=>{
     setPLoad(true);
-    const {data}=await sb.from("posts").select("*").order("created_at",{ascending:false});
+    const{data}=await sb.from("posts").select("*").order("created_at",{ascending:false});
     if(data)setPosts(data);
     setPLoad(false);
   };
-
-  const loadUsers = async()=>{
+  const loadUsers=async()=>{
     setULoad(true);
-    const {data}=await sb.from("users").select("id,email,first_name,last_name,location,role,created_at");
+    const{data}=await sb.from("users").select("id,email,first_name,last_name,location,role,status,created_at").order("created_at",{ascending:false});
     if(data)setUsers(data);
     setULoad(false);
   };
+  const loadNotifs=async()=>{
+    if(!user)return;
+    const{data}=await sb.from("notifications").select("*").eq("user_id",user.id).order("created_at",{ascending:false}).limit(25);
+    if(data)setNotifs(data);
+  };
 
   useEffect(()=>{
-    if(screen==="app"){loadInv();loadClients();loadPosts();loadUsers();}
+    if(screen==="app"){
+      loadInv();loadClients();loadPool();loadPosts();loadUsers();loadNotifs();
+      const iv=setInterval(()=>{loadNotifs();loadPool();},30000);
+      return()=>clearInterval(iv);
+    }
   },[screen]);
 
-  // ── Auth handlers ─────────────────────────────────────────────
+  useEffect(()=>{
+    const h=e=>{if(notifRef.current&&!notifRef.current.contains(e.target))setShowNotifs(false);};
+    document.addEventListener("mousedown",h);
+    return()=>document.removeEventListener("mousedown",h);
+  },[]);
+
+  // ── Auth ──────────────────────────────────────────────────────
   const doLogin=async()=>{
-    setAuthErr("");setAuthLoad(true);
-    const {data,error}=await sb.from("users").select("*").eq("email",lf.email.toLowerCase().trim()).single();
-    if(error||!data){setAuthErr("No account found with that email.");setAuthLoad(false);return;}
-    if(data.password_hash!==lf.password){setAuthErr("Incorrect password.");setAuthLoad(false);return;}
-    setUser(data);setScreen("app");setAuthLoad(false);
+    setAErr("");setALoad(true);
+    const{data,error}=await sb.from("users").select("*").eq("email",lf.email.toLowerCase().trim()).single();
+    if(error||!data){setAErr("No account found with that email.");setALoad(false);return;}
+    if(data.status==="disabled"){setAErr("Your account has been disabled. Contact your administrator.");setALoad(false);return;}
+    if(data.password_hash!==lf.password&&data.temp_password!==lf.password){setAErr("Incorrect password.");setALoad(false);return;}
+    const t=getT(data);setT(t);setThemeKey(data?.theme?.mode||"dark");
+    setUser(data);setScreen("app");setALoad(false);
   };
-
   const doSignup=async()=>{
-    setAuthErr("");
-    const {firstName,lastName,email,password,confirm,location}=sf;
-    if(!firstName||!lastName||!email||!password||!location){setAuthErr("Please fill in all required fields.");return;}
+    setAErr("");
+    const{firstName,lastName,email,password,confirm,location}=sf;
+    if(!firstName||!lastName||!email||!password||!location){setAErr("Please fill in all required fields.");return;}
     const domain=email.split("@")[1]?.toLowerCase();
-    if(!ALLOWED_DOMAINS.includes(domain)){setAuthErr("Sorry — only @houseofcars.com and @houseofcarscalgary.com accounts are allowed.");return;}
-    if(password.length<8){setAuthErr("Password must be at least 8 characters.");return;}
-    if(password!==confirm){setAuthErr("Passwords do not match.");return;}
-    setAuthLoad(true);
-    const {data:ex}=await sb.from("users").select("id").eq("email",email.toLowerCase()).single();
-    if(ex){setAuthErr("An account with this email already exists.");setAuthLoad(false);return;}
-    const {data,error}=await sb.from("users").insert({email:email.toLowerCase().trim(),first_name:firstName,last_name:lastName,location,role:sf.role,password_hash:password}).select().single();
-    if(error){setAuthErr("Error creating account: "+error.message);setAuthLoad(false);return;}
-    setUser(data);setScreen("app");setAuthLoad(false);
+    if(!ALLOWED.includes(domain)){setAErr("Only @houseofcars.com and @houseofcarscalgary.com allowed.");return;}
+    if(password.length<8){setAErr("Password must be at least 8 characters.");return;}
+    if(password!==confirm){setAErr("Passwords do not match.");return;}
+    setALoad(true);
+    const{data:ex}=await sb.from("users").select("id").eq("email",email.toLowerCase()).single();
+    if(ex){setAErr("An account with this email already exists.");setALoad(false);return;}
+    const{data,error}=await sb.from("users").insert({email:email.toLowerCase().trim(),first_name:firstName,last_name:lastName,location,role:sf.role,password_hash:password,status:"active"}).select().single();
+    if(error){setAErr("Error: "+error.message);setALoad(false);return;}
+    setT(THEMES.dark);setUser(data);setScreen("app");setALoad(false);
   };
 
-  const doForgot=()=>{
-    setAuthErr("");setAuthMsg("");
-    if(!forgotEmail){setAuthErr("Please enter your email.");return;}
-    setAuthMsg("Please contact your administrator to reset your password.");
-  };
-
-  // ── Client CRUD ───────────────────────────────────────────────
+  // ── Clients ───────────────────────────────────────────────────
   const saveClient=async()=>{
     if(!cf.name){setCMsg({t:"Name is required.",type:"error"});return;}
-    const {data,error}=await sb.from("clients").insert({...cf,created_by:user.id,last_contact:new Date().toISOString()}).select().single();
+    const{data,error}=await sb.from("clients").insert({...cf,created_by:user.id,assigned_location:user.location,last_contact:new Date().toISOString()}).select().single();
     if(error){setCMsg({t:"Error: "+error.message,type:"error"});return;}
-    setClients(p=>[data,...p]);
-    setAddC(false);
+    setClients(p=>[data,...p]);setAddC(false);
     setCf({name:"",phone:"",email:"",location:"",status:"Warm",notes:"",interested_in:"",paired_vehicle_stock:""});
-    setCMsg({t:"✅ Client saved!",type:"success"});
-    setTimeout(()=>setCMsg({t:"",type:""}),3000);
+    setCMsg({t:"✅ Client saved!",type:"success"});setTimeout(()=>setCMsg({t:"",type:""}),3000);
   };
-
   const updateClient=async()=>{
-    const {data,error}=await sb.from("clients").update(cf).eq("id",selC.id).select().single();
+    const{data,error}=await sb.from("clients").update(cf).eq("id",selC.id).select().single();
     if(error){setCMsg({t:"Error: "+error.message,type:"error"});return;}
-    setClients(p=>p.map(c=>c.id===data.id?data:c));
-    setSelC(data);setEditC(false);
-    setCMsg({t:"✅ Client updated!",type:"success"});
-    setTimeout(()=>setCMsg({t:"",type:""}),3000);
+    setClients(p=>p.map(c=>c.id===data.id?data:c));setSelC(data);setEditC(false);
+    setCMsg({t:"✅ Updated!",type:"success"});setTimeout(()=>setCMsg({t:"",type:""}),3000);
   };
-
   const deleteClient=async(id)=>{
-    if(!window.confirm("Delete this client? This cannot be undone."))return;
+    if(!window.confirm("Delete this client? Cannot be undone."))return;
     await sb.from("clients").delete().eq("id",id);
-    setClients(p=>p.filter(c=>c.id!==id));
-    setSelC(null);
+    setClients(p=>p.filter(c=>c.id!==id));setSelC(null);
   };
-
   const pairVehicle=async(client,vehicle)=>{
-    const {data,error}=await sb.from("clients").update({interested_in:vehicle.year+" "+vehicle.make+" "+vehicle.model,paired_vehicle_stock:vehicle.stock}).eq("id",client.id).select().single();
+    const{data,error}=await sb.from("clients").update({interested_in:vehicle.year+" "+vehicle.make+" "+vehicle.model,paired_vehicle_stock:vehicle.stock}).eq("id",client.id).select().single();
     if(!error&&data){setClients(p=>p.map(c=>c.id===data.id?data:c));setSelC(data);}
-    setPairModal(null);setCSearch("");
+    setPairModal(null);setVSearch("");
   };
 
-  // ── Ad Draft helpers ──────────────────────────────────────────
-  const buildDraftText=(v)=>
-    "🚗 "+v.year+" "+v.make+" "+v.model+" | "+fmtCur(v.price)+"\n\n"+
-    "📍 "+v.location+"\n"+
-    "🔢 "+v.mileage+" | Stock #"+v.stock+(v.color?" | "+v.color:"")+"\n\n"+
-    "This "+v.condition+" "+v.year+" "+v.make+" "+v.model+" is ready for its new home!\n\n"+
-    "✅ Competitively priced at "+fmtCur(v.price)+"\n"+
-    "✅ "+v.mileage+" on the clock\n"+
-    "✅ Available at House of Cars "+v.location+"\n\n"+
-    "📞 Call or message us to book a test drive!\n\n"+
-    "#HouseOfCars #"+(v.make||"").replace(/\s/g,"")+" #"+(v.model||"").replace(/\s/g,"")+" #UsedCars #Alberta #CarSales";
+  // ── Lead Pool ─────────────────────────────────────────────────
+  const addToPool=async(client)=>{
+    if(!window.confirm("Add '"+client.name+"' to the Lead Pool? Other reps will be notified."))return;
+    const{error}=await sb.from("lead_pool").insert({client_id:client.id,added_by:user.id,note:poolNote,status:"available"});
+    if(error){setPoolMsg({t:"Error: "+error.message,type:"error"});return;}
+    const others=users.filter(u=>u.id!==user.id&&u.status==="active");
+    if(others.length>0){
+      await sb.from("notifications").insert(others.map(u=>({
+        user_id:u.id,
+        message:`🔔 ${user.first_name} ${user.last_name} needs help with lead: ${client.name}. Check the Lead Pool!`,
+        link_tab:"pool",read:false
+      })));
+    }
+    setPoolNote("");
+    setPoolMsg({t:"✅ Added to Lead Pool! "+others.length+" reps notified.",type:"success"});
+    setTimeout(()=>setPoolMsg({t:"",type:""}),4000);
+    loadPool();
+  };
+  const claimFromPool=async(item)=>{
+    await sb.from("lead_pool").update({status:"claimed",claimed_by:user.id}).eq("id",item.id);
+    await sb.from("clients").update({created_by:user.id,assigned_location:user.location}).eq("id",item.client_id);
+    await sb.from("notifications").insert({user_id:item.added_by,message:`✅ ${user.first_name} ${user.last_name} claimed your lead: ${item.client?.name}`,link_tab:"clients",read:false});
+    loadPool();loadClients();
+  };
 
+  // ── Ad Drafts ─────────────────────────────────────────────────
   const openDraft=(vehicle=null,post=null)=>{
     if(post){
-      setEditPost(post);
-      setDraftTitle(post.vehicle_title||"");
-      setDraftText(post.draft_text||"");
+      setEditPost(post);setDraftTitle(post.vehicle_title||"");setDraftText(post.draft_text||"");
+      setDraftImg(post.vehicle_image||"");setDraftFeat("");setDraftIntro("");
       setDraftV(inv.find(v=>v.stock===post.vehicle_stock)||null);
-    } else {
-      setEditPost(null);
-      setDraftV(vehicle);
-      setDraftTitle(vehicle?vehicle.year+" "+vehicle.make+" "+vehicle.model:"");
-      setDraftText(vehicle?buildDraftText(vehicle):"");
+    }else{
+      setEditPost(null);setDraftV(vehicle);setDraftFeat("");setDraftIntro("");
+      if(vehicle){setDraftTitle(vehicle.year+" "+vehicle.make+" "+vehicle.model);setDraftImg(vehicle.image||"");setDraftText(buildAd(vehicle));}
+      else{setDraftTitle("");setDraftText("");setDraftImg("");}
     }
-    setVSearch("");
-    setDraftOpen(true);
+    setDraftSearch("");setDraftOpen(true);
   };
-
   const saveDraft=async(status="Draft")=>{
     if(!draftText){setPMsg({t:"Please write your ad text first.",type:"error"});return;}
-    const payload={vehicle_stock:draftV?.stock||null,vehicle_title:draftTitle,draft_text:draftText,status,created_by:user.id,posted_at:status==="Posted"?new Date().toISOString():null};
+    const payload={vehicle_stock:draftV?.stock||null,vehicle_title:draftTitle,draft_text:draftText,vehicle_image:draftImg||draftV?.image||"",status,created_by:user.id,posted_at:status==="Posted"?new Date().toISOString():null};
     if(editPost){
-      const {data,error}=await sb.from("posts").update(payload).eq("id",editPost.id).select().single();
+      const{data,error}=await sb.from("posts").update(payload).eq("id",editPost.id).select().single();
       if(error){setPMsg({t:"Error: "+error.message,type:"error"});return;}
       setPosts(p=>p.map(x=>x.id===data.id?data:x));
-    } else {
-      const {data,error}=await sb.from("posts").insert(payload).select().single();
+    }else{
+      const{data,error}=await sb.from("posts").insert(payload).select().single();
       if(error){setPMsg({t:"Error: "+error.message,type:"error"});return;}
       setPosts(p=>[data,...p]);
     }
@@ -280,36 +358,62 @@ function App(){
     setPMsg({t:status==="Draft"?"✅ Draft saved!":"✅ Marked as posted!",type:"success"});
     setTimeout(()=>setPMsg({t:"",type:""}),4000);
   };
-
   const openMarketplace=()=>{
     navigator.clipboard.writeText(draftText).catch(()=>{});
     window.open("https://www.facebook.com/marketplace/create/vehicle","_blank");
     saveDraft("Posted");
   };
-
   const deletePost=async(id)=>{
     if(!window.confirm("Delete this draft?"))return;
     await sb.from("posts").delete().eq("id",id);
     setPosts(p=>p.filter(x=>x.id!==id));
   };
 
-  // ── Register user ─────────────────────────────────────────────
+  // ── User Management ───────────────────────────────────────────
   const doRegister=async()=>{
     setRErr("");setROk(false);
-    const {firstName,lastName,email,password,confirm,location}=rf;
+    const{firstName,lastName,email,password,confirm,location}=rf;
     if(!firstName||!lastName||!email||!password||!location){setRErr("Please fill in all required fields.");return;}
     const domain=email.split("@")[1]?.toLowerCase();
-    if(!ALLOWED_DOMAINS.includes(domain)){setRErr("Only @houseofcars.com and @houseofcarscalgary.com allowed.");return;}
-    if(password.length<8){setRErr("Password must be at least 8 characters.");return;}
+    if(!ALLOWED.includes(domain)){setRErr("Only @houseofcars.com and @houseofcarscalgary.com allowed.");return;}
+    if(password.length<8){setRErr("Password must be at least 8 chars.");return;}
     if(password!==confirm){setRErr("Passwords do not match.");return;}
     setRLoad(true);
-    const {data:ex}=await sb.from("users").select("id").eq("email",email.toLowerCase()).single();
+    const{data:ex}=await sb.from("users").select("id").eq("email",email.toLowerCase()).single();
     if(ex){setRErr("An account with this email already exists.");setRLoad(false);return;}
-    const {error}=await sb.from("users").insert({email:email.toLowerCase().trim(),first_name:firstName,last_name:lastName,location,role:rf.role,password_hash:password});
+    const{error}=await sb.from("users").insert({email:email.toLowerCase().trim(),first_name:firstName,last_name:lastName,location,role:rf.role,password_hash:password,status:"active"});
     if(error){setRErr("Error: "+error.message);setRLoad(false);return;}
     setROk(true);setRLoad(false);
     setRf({firstName:"",lastName:"",email:"",location:"",role:"Sales",password:"",confirm:""});
     loadUsers();
+  };
+  const toggleStatus=async(u)=>{
+    const ns=u.status==="active"?"disabled":"active";
+    if(!window.confirm(`${ns==="disabled"?"Disable":"Enable"} ${u.first_name}'s account?`))return;
+    await sb.from("users").update({status:ns}).eq("id",u.id);
+    setUsers(p=>p.map(x=>x.id===u.id?{...x,status:ns}:x));
+  };
+  const doResetPw=async()=>{
+    if(!resetPw||resetPw.length<8){setResetMsg("Password must be at least 8 characters.");return;}
+    await sb.from("users").update({password_hash:resetPw,temp_password:resetPw}).eq("id",resetTarget.id);
+    setResetMsg("✅ Password reset! Tell "+resetTarget.first_name+" their new password.");
+    setTimeout(()=>{setResetTarget(null);setResetPw("");setResetMsg("");},3000);
+  };
+
+  // ── Notifications ─────────────────────────────────────────────
+  const markRead=async(id)=>{
+    await sb.from("notifications").update({read:true}).eq("id",id);
+    setNotifs(p=>p.map(n=>n.id===id?{...n,read:true}:n));
+  };
+  const markAllRead=async()=>{
+    await sb.from("notifications").update({read:true}).eq("user_id",user.id);
+    setNotifs(p=>p.map(n=>({...n,read:true})));
+  };
+
+  // ── Theme ─────────────────────────────────────────────────────
+  const saveTheme=async(key)=>{
+    setThemeKey(key);setT(THEMES[key]);
+    await sb.from("users").update({theme:{mode:key}}).eq("id",user.id);
   };
 
   // ── Inventory filter/sort ─────────────────────────────────────
@@ -319,79 +423,77 @@ function App(){
     let d=[...inv];
     if(iFilter!=="All")d=d.filter(v=>v.type===iFilter);
     if(iLoc!=="All")d=d.filter(v=>v.location===iLoc);
+    if(iSearch){const q=iSearch.toLowerCase();d=d.filter(v=>(v.make+" "+v.model+" "+v.year+" "+v.stock+" "+v.location).toLowerCase().includes(q));}
     d.sort((a,b)=>{let av=a[iSort.col],bv=b[iSort.col];if(typeof av==="string"){av=av.toLowerCase();bv=bv.toLowerCase();}return iSort.dir==="asc"?(av>bv?1:-1):(av<bv?1:-1);});
     return d;
-  },[inv,iFilter,iLoc,iSort]);
+  },[inv,iFilter,iLoc,iSearch,iSort]);
   const toggleSort=col=>setISort(s=>({col,dir:s.col===col&&s.dir==="asc"?"desc":"asc"}));
   const arr=col=>iSort.col===col?(iSort.dir==="asc"?" ↑":" ↓"):" ↕";
 
-  // ── Vehicle search for pair/draft ─────────────────────────────
-  const searchedVehicles=useMemo(()=>{
-    const q=(vSearch||cSearch).toLowerCase();
-    if(!q)return inv.slice(0,25);
-    return inv.filter(v=>(v.make+" "+v.model+" "+v.year+" "+v.stock+" "+v.location).toLowerCase().includes(q)).slice(0,25);
-  },[inv,vSearch,cSearch]);
-
-  // ── Filtered clients for search ───────────────────────────────
-  const filtClients=useMemo(()=>{
-    if(!cSearch)return clients;
+  const visC=useMemo(()=>clients.filter(c=>canSee(c)),[clients,user]);
+  const filtC=useMemo(()=>{
+    if(!cSearch)return visC;
     const q=cSearch.toLowerCase();
-    return clients.filter(c=>(c.name+" "+c.email+" "+c.phone+" "+c.location).toLowerCase().includes(q));
-  },[clients,cSearch]);
+    return visC.filter(c=>(c.name+" "+c.email+" "+c.phone+" "+c.location).toLowerCase().includes(q));
+  },[visC,cSearch]);
 
-  // ═══════════════════════════════════════════════════════════════
-  // AUTH SCREENS
-  // ═══════════════════════════════════════════════════════════════
-  if(screen!=="app") return (
-    <div className="auth-bg">
-      <div className="auth-box fu">
+  const srchV=useMemo(()=>{
+    const q=(vSearch||draftSearch).toLowerCase();
+    if(!q)return inv.slice(0,20);
+    return inv.filter(v=>(v.make+" "+v.model+" "+v.year+" "+v.stock+" "+v.location).toLowerCase().includes(q)).slice(0,25);
+  },[inv,vSearch,draftSearch]);
+
+  const unread=notifs.filter(n=>!n.read).length;
+
+  // ═══════════════════════════════════════════════
+  // AUTH
+  // ═══════════════════════════════════════════════
+  if(screen!=="app") return(
+    <div className="auth-bg" style={{background:"radial-gradient(ellipse at 20% 50%,rgba(230,57,70,.15) 0%,transparent 60%),#0A0A0F"}}>
+      <div className="auth-box fu" style={{background:"#111118",border:"1px solid #1E1E2A"}}>
         <div style={{textAlign:"center",marginBottom:28}}>
           <div style={{width:52,height:52,background:"#E63946",borderRadius:14,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:26,marginBottom:10}}>🚗</div>
-          <div style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:3}}>HOUSE OF CARS</div>
+          <div style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:3,color:"#E8E8F0"}}>HOUSE OF CARS</div>
           <div style={{fontSize:11,color:"#E63946",fontWeight:700,letterSpacing:2,marginTop:2}}>CRM COMPANION</div>
         </div>
-        {authErr&&<div className="notice error fu">⚠️ {authErr}</div>}
-        {authMsg&&<div className="notice success fu">✅ {authMsg}</div>}
+        {aErr&&<div style={{...nErr,marginBottom:16}}>⚠️ {aErr}</div>}
+        {aMsg&&<div style={{...nOk,marginBottom:16}}>✅ {aMsg}</div>}
 
         {screen==="login"&&<>
-          <div style={{fontSize:20,fontWeight:700,marginBottom:18}}>Welcome back</div>
+          <div style={{fontSize:20,fontWeight:700,marginBottom:18,color:"#E8E8F0"}}>Welcome back</div>
           <div style={{display:"grid",gap:12}}>
-            <div>
-              <div style={{fontSize:11,color:"#555",marginBottom:5}}>Work Email</div>
-              <input className="inp" placeholder="name@houseofcars.com" value={lf.email} onChange={e=>{setLf(p=>({...p,email:e.target.value}));setAuthErr("");}} onKeyDown={e=>e.key==="Enter"&&doLogin()}/>
+            <div><div style={{fontSize:11,color:"#555",marginBottom:5}}>Work Email</div>
+              <input style={{...inp,background:"#16161f",border:"1px solid #252535",color:"#E8E8F0"}} placeholder="name@houseofcars.com" value={lf.email} onChange={e=>{setLf(p=>({...p,email:e.target.value}));setAErr("");}} onKeyDown={e=>e.key==="Enter"&&doLogin()}/>
             </div>
-            <div>
-              <div style={{fontSize:11,color:"#555",marginBottom:5}}>Password</div>
+            <div><div style={{fontSize:11,color:"#555",marginBottom:5}}>Password</div>
               <div style={{position:"relative"}}>
-                <input className="inp" type={showPw?"text":"password"} placeholder="••••••••" value={lf.password} onChange={e=>{setLf(p=>({...p,password:e.target.value}));setAuthErr("");}} onKeyDown={e=>e.key==="Enter"&&doLogin()} style={{paddingRight:42}}/>
+                <input style={{...inp,background:"#16161f",border:"1px solid #252535",color:"#E8E8F0",paddingRight:42}} type={showPw?"text":"password"} placeholder="••••••••" value={lf.password} onChange={e=>{setLf(p=>({...p,password:e.target.value}));setAErr("");}} onKeyDown={e=>e.key==="Enter"&&doLogin()}/>
                 <button onClick={()=>setShowPw(s=>!s)} style={{position:"absolute",right:11,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"#555",cursor:"pointer",fontSize:14}}>{showPw?"🙈":"👁️"}</button>
               </div>
             </div>
-            <button onClick={()=>{setScreen("forgot");setAuthErr("");setAuthMsg("");}} style={{background:"none",border:"none",color:"#E63946",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans'",textAlign:"right",padding:0}}>Forgot password?</button>
-            <button className="btn-red" onClick={doLogin} disabled={authLoad} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-              {authLoad?<><span className="spin"></span>Signing in…</>:"Sign In"}
+            <button onClick={()=>{setScreen("forgot");setAErr("");setAMsg("");}} style={{background:"none",border:"none",color:"#E63946",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans'",textAlign:"right",padding:0}}>Forgot password?</button>
+            <button style={{...btnP,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8}} onClick={doLogin} disabled={aLoad}>
+              {aLoad?<><span className="spin"></span>Signing in…</>:"Sign In"}
             </button>
           </div>
-          <div style={{display:"flex",alignItems:"center",gap:12,margin:"18px 0",color:"#333",fontSize:12}}>
-            <div style={{flex:1,height:1,background:"#1E1E2A"}}></div>or<div style={{flex:1,height:1,background:"#1E1E2A"}}></div>
-          </div>
-          <button onClick={()=>{setScreen("signup");setAuthErr("");}} style={{width:"100%",background:"none",border:"1px solid #252535",borderRadius:9,padding:"10px",color:"#aaa",fontSize:13,cursor:"pointer",fontFamily:"'DM Sans'"}}>Create a new account</button>
+          <div style={{display:"flex",alignItems:"center",gap:12,margin:"18px 0",color:"#333",fontSize:12}}><div style={{flex:1,height:1,background:"#1E1E2A"}}></div>or<div style={{flex:1,height:1,background:"#1E1E2A"}}></div></div>
+          <button onClick={()=>{setScreen("signup");setAErr("");}} style={{width:"100%",background:"none",border:"1px solid #252535",borderRadius:9,padding:"10px",color:"#aaa",fontSize:13,cursor:"pointer",fontFamily:"'DM Sans'"}}>Create a new account</button>
           <p style={{textAlign:"center",fontSize:11,color:"#2a2a38",marginTop:14}}>House of Cars staff only</p>
         </>}
 
         {screen==="signup"&&<>
-          <div style={{fontSize:20,fontWeight:700,marginBottom:4}}>Create your account</div>
+          <div style={{fontSize:20,fontWeight:700,marginBottom:4,color:"#E8E8F0"}}>Create your account</div>
           <p style={{fontSize:12,color:"#555",marginBottom:18}}>@houseofcars.com and @houseofcarscalgary.com only.</p>
           <div style={{display:"grid",gap:11}}>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-              <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>First Name *</div><input className="inp" placeholder="First" value={sf.firstName} onChange={e=>{setSf(p=>({...p,firstName:e.target.value}));setAuthErr("");}}/></div>
-              <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Last Name *</div><input className="inp" placeholder="Last" value={sf.lastName} onChange={e=>{setSf(p=>({...p,lastName:e.target.value}));setAuthErr("");}}/></div>
+              <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>First Name *</div><input style={{...inp,background:"#16161f",border:"1px solid #252535",color:"#E8E8F0"}} placeholder="First" value={sf.firstName} onChange={e=>{setSf(p=>({...p,firstName:e.target.value}));setAErr("");}}/></div>
+              <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Last Name *</div><input style={{...inp,background:"#16161f",border:"1px solid #252535",color:"#E8E8F0"}} placeholder="Last" value={sf.lastName} onChange={e=>{setSf(p=>({...p,lastName:e.target.value}));setAErr("");}}/></div>
             </div>
-            <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Work Email *</div><input className="inp" placeholder="name@houseofcars.com" value={sf.email} onChange={e=>{setSf(p=>({...p,email:e.target.value}));setAuthErr("");}}/></div>
+            <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Work Email *</div><input style={{...inp,background:"#16161f",border:"1px solid #252535",color:"#E8E8F0"}} placeholder="name@houseofcars.com" value={sf.email} onChange={e=>{setSf(p=>({...p,email:e.target.value}));setAErr("");}}/></div>
             <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Location *</div>
-              <select className="inp" value={sf.location} onChange={e=>setSf(p=>({...p,location:e.target.value}))}>
+              <select style={{...inp,background:"#16161f",border:"1px solid #252535",color:"#E8E8F0"}} value={sf.location} onChange={e=>setSf(p=>({...p,location:e.target.value}))}>
                 <option value="">Select location…</option>
-                {HOC_LOCATIONS.map(l=><option key={l} value={l}>{l}</option>)}
+                {LOCS.map(l=><option key={l} value={l}>{l}</option>)}
               </select>
             </div>
             <div><div style={{fontSize:11,color:"#555",marginBottom:5}}>Role</div>
@@ -403,200 +505,234 @@ function App(){
             </div>
             <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Password *</div>
               <div style={{position:"relative"}}>
-                <input className="inp" type={showPw?"text":"password"} placeholder="Min. 8 chars" value={sf.password} onChange={e=>setSf(p=>({...p,password:e.target.value}))} style={{paddingRight:42}}/>
+                <input style={{...inp,background:"#16161f",border:"1px solid #252535",color:"#E8E8F0",paddingRight:42}} type={showPw?"text":"password"} placeholder="Min. 8 chars" value={sf.password} onChange={e=>setSf(p=>({...p,password:e.target.value}))}/>
                 <button onClick={()=>setShowPw(s=>!s)} style={{position:"absolute",right:11,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"#555",cursor:"pointer",fontSize:14}}>{showPw?"🙈":"👁️"}</button>
               </div>
             </div>
-            <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Confirm Password *</div><input className="inp" type={showPw?"text":"password"} placeholder="Repeat" value={sf.confirm} onChange={e=>setSf(p=>({...p,confirm:e.target.value}))}/></div>
-            <button className="btn-red" onClick={doSignup} disabled={authLoad} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-              {authLoad?<><span className="spin"></span>Creating…</>:"Create Account"}
+            <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Confirm *</div><input style={{...inp,background:"#16161f",border:"1px solid #252535",color:"#E8E8F0"}} type={showPw?"text":"password"} placeholder="Repeat" value={sf.confirm} onChange={e=>setSf(p=>({...p,confirm:e.target.value}))}/></div>
+            <button style={{...btnP,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8}} onClick={doSignup} disabled={aLoad}>
+              {aLoad?<><span className="spin"></span>Creating…</>:"Create Account"}
             </button>
           </div>
-          <button onClick={()=>{setScreen("login");setAuthErr("");}} style={{width:"100%",background:"none",border:"none",color:"#555",fontSize:13,cursor:"pointer",marginTop:14,fontFamily:"'DM Sans'"}}>← Back to Sign In</button>
+          <button onClick={()=>{setScreen("login");setAErr("");}} style={{width:"100%",background:"none",border:"none",color:"#555",fontSize:13,cursor:"pointer",marginTop:14,fontFamily:"'DM Sans'"}}>← Back to Sign In</button>
         </>}
 
         {screen==="forgot"&&<>
-          <div style={{fontSize:20,fontWeight:700,marginBottom:6}}>Reset your password</div>
-          <p style={{fontSize:13,color:"#555",marginBottom:20,lineHeight:1.6}}>Enter your email and we'll send instructions to your administrator.</p>
+          <div style={{fontSize:20,fontWeight:700,marginBottom:6,color:"#E8E8F0"}}>Reset your password</div>
+          <p style={{fontSize:13,color:"#555",marginBottom:20,lineHeight:1.6}}>Enter your email below. Your administrator will reset your password in the Accounts tab.</p>
           <div style={{display:"grid",gap:12}}>
-            <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Work Email</div><input className="inp" placeholder="name@houseofcars.com" value={forgotEmail} onChange={e=>{setForgotEmail(e.target.value);setAuthErr("");setAuthMsg("");}}/></div>
-            <button className="btn-red" onClick={doForgot} style={{width:"100%"}}>Send Instructions</button>
+            <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Work Email</div><input style={{...inp,background:"#16161f",border:"1px solid #252535",color:"#E8E8F0"}} placeholder="name@houseofcars.com" value={fgEmail} onChange={e=>{setFgEmail(e.target.value);setAErr("");setAMsg("");}}/></div>
+            <button style={{...btnP,width:"100%"}} onClick={()=>{if(!fgEmail){setAErr("Please enter your email.");return;}setAMsg("Request sent! Your administrator will reset your password in the Accounts tab shortly.");}}>Send Request</button>
           </div>
-          <button onClick={()=>{setScreen("login");setAuthErr("");setAuthMsg("");}} style={{width:"100%",background:"none",border:"none",color:"#555",fontSize:13,cursor:"pointer",marginTop:14,fontFamily:"'DM Sans'"}}>← Back to Sign In</button>
+          <button onClick={()=>{setScreen("login");setAErr("");setAMsg("");}} style={{width:"100%",background:"none",border:"none",color:"#555",fontSize:13,cursor:"pointer",marginTop:14,fontFamily:"'DM Sans'"}}>← Back to Sign In</button>
         </>}
       </div>
     </div>
   );
 
-  // ═══════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════
   // MAIN APP
-  // ═══════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════
   const TABS=[
     {id:"dashboard",label:"Dashboard",icon:"⬛"},
-    {id:"clients",  label:"Clients",  icon:"👥", badge:clients.length, badgeColor:"#E63946"},
-    {id:"inventory",label:"Inventory",icon:"🚗", badge:inv.length,     badgeColor:"#0A84FF"},
-    {id:"social",   label:"Ad Drafts",icon:"📝", badge:posts.filter(p=>p.status==="Draft").length, badgeColor:"#FF9500"},
-    {id:"accounts", label:"Accounts", icon:"🔐"},
+    {id:"clients",  label:"Clients",  icon:"👥",badge:visC.length},
+    {id:"pool",     label:"Lead Pool",icon:"🎯",badge:pool.length,bc:"#FF9500"},
+    {id:"inventory",label:"Inventory",icon:"🚗",badge:inv.length,bc:"#0A84FF"},
+    {id:"drafts",   label:"Ad Drafts",icon:"📝",badge:posts.filter(p=>p.status==="Draft").length,bc:"#FF9500"},
+    ...(isAdmin?[{id:"accounts",label:"Accounts",icon:"🔐"}]:[]),
   ];
 
-  return (
-    <div style={{fontFamily:"'DM Sans',sans-serif",background:"#0A0A0F",minHeight:"100vh",color:"#E8E8F0",display:"flex",flexDirection:"column"}}>
+  return(
+    <div style={{fontFamily:"'DM Sans',sans-serif",background:T.bg,minHeight:"100vh",color:T.text,display:"flex",flexDirection:"column"}}>
 
-      {/* ── Header ── */}
-      <div style={{background:"#0D0D14",borderBottom:"1px solid #1E1E2A",padding:"0 20px",display:"flex",alignItems:"center",justifyContent:"space-between",height:56,flexShrink:0}}>
+      {/* Header */}
+      <div style={{background:T.nav,borderBottom:`1px solid ${T.border}`,padding:"0 20px",display:"flex",alignItems:"center",justifyContent:"space-between",height:56,flexShrink:0}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <div style={{background:"#E63946",width:30,height:30,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15}}>🚗</div>
-          <span style={{fontFamily:"'Bebas Neue'",fontSize:20,letterSpacing:2}}>HOUSE OF CARS</span>
-          <span style={{color:"#E63946",fontSize:10,fontWeight:700,background:"rgba(230,57,70,.14)",padding:"2px 8px",borderRadius:4,border:"1px solid rgba(230,57,70,.3)",marginLeft:2}}>CRM</span>
+          <div style={{background:T.accent,width:30,height:30,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15}}>🚗</div>
+          <span style={{fontFamily:"'Bebas Neue'",fontSize:20,letterSpacing:2,color:T.text}}>HOUSE OF CARS</span>
+          <span style={{color:T.accent,fontSize:10,fontWeight:700,background:T.accent+"22",padding:"2px 8px",borderRadius:4,border:`1px solid ${T.accent}44`,marginLeft:2}}>CRM</span>
         </div>
-        <div style={{display:"flex",alignItems:"center",gap:12}}>
-          {synced&&<span style={{fontSize:11,color:"#444"}}>Inventory synced {synced}</span>}
-          {invLoad&&<span style={{fontSize:11,color:"#FF9500",display:"flex",alignItems:"center",gap:6}}><span className="spin" style={{width:11,height:11,borderTopColor:"#FF9500"}}></span>Loading…</span>}
-          <span style={{fontSize:12,color:"#666"}}>{user?.first_name} {user?.last_name} · {user?.location}</span>
-          <div style={{width:30,height:30,borderRadius:"50%",background:"linear-gradient(135deg,#E63946,#a02030)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          {synced&&<span style={{fontSize:11,color:T.muted}}>Synced {synced}</span>}
+          {invLoad&&<span style={{fontSize:11,color:"#FF9500",display:"flex",alignItems:"center",gap:5}}><span className="spin" style={{width:11,height:11,borderTopColor:"#FF9500",borderColor:"rgba(255,149,0,.2)"}}></span>Loading…</span>}
+
+          {/* Bell */}
+          <div ref={notifRef} style={{position:"relative"}}>
+            <button onClick={()=>setShowNotifs(s=>!s)} style={{background:"none",border:"none",cursor:"pointer",fontSize:18,color:T.text,display:"flex",alignItems:"center",padding:4,position:"relative"}}>
+              🔔{unread>0&&<span style={{position:"absolute",top:0,right:0,width:16,height:16,borderRadius:"50%",background:"#E63946",color:"#fff",fontSize:9,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>{unread}</span>}
+            </button>
+            {showNotifs&&(
+              <div style={{position:"absolute",right:0,top:38,width:340,background:T.surface,border:`1px solid ${T.border}`,borderRadius:14,boxShadow:"0 8px 32px rgba(0,0,0,.4)",zIndex:999}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 16px",borderBottom:`1px solid ${T.border}`}}>
+                  <span style={{fontSize:13,fontWeight:700,color:T.text}}>Notifications</span>
+                  {unread>0&&<button onClick={markAllRead} style={{background:"none",border:"none",color:T.accent,fontSize:11,cursor:"pointer",fontFamily:"'DM Sans'"}}>Mark all read</button>}
+                </div>
+                <div style={{maxHeight:300,overflowY:"auto"}}>
+                  {notifs.length===0&&<div style={{padding:20,color:T.muted,fontSize:13,textAlign:"center"}}>No notifications yet.</div>}
+                  {notifs.map(n=>(
+                    <div key={n.id} onClick={()=>{markRead(n.id);if(n.link_tab){setTab(n.link_tab);setShowNotifs(false);}}} style={{padding:"11px 16px",borderBottom:`1px solid ${T.border}`,cursor:"pointer",background:n.read?"transparent":T.accent+"11",display:"flex",gap:10,alignItems:"flex-start"}}>
+                      {!n.read&&<div style={{width:7,height:7,borderRadius:"50%",background:T.accent,marginTop:5,flexShrink:0}}></div>}
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:12,color:T.text,lineHeight:1.5}}>{n.message}</div>
+                        <div style={{fontSize:10,color:T.muted,marginTop:3}}>{fmtDate(n.created_at)}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <span style={{fontSize:12,color:T.muted}}>{user?.first_name} {user?.last_name}</span>
+          <div style={{width:30,height:30,borderRadius:"50%",background:`linear-gradient(135deg,${T.accent},${T.accent}99)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"#fff",flexShrink:0}}>
             {(user?.first_name?.[0]||"")+(user?.last_name?.[0]||"")}
           </div>
-          <button className="btn-sm" style={{fontSize:11}} onClick={()=>{setScreen("login");setUser(null);setInv([]);setClients([]);setPosts([]);}}>Sign Out</button>
+          <button onClick={()=>setSettingsOpen(true)} style={{background:"none",border:"none",cursor:"pointer",fontSize:16,color:T.muted,padding:4}} title="Settings">⚙️</button>
+          <button style={{...btnS,fontSize:11}} onClick={()=>{setScreen("login");setUser(null);setInv([]);setClients([]);setPosts([]);}}>Sign Out</button>
         </div>
       </div>
 
-      {/* ── Nav ── */}
-      <div style={{background:"#0D0D14",borderBottom:"1px solid #1E1E2A",padding:"0 14px",display:"flex",gap:2,flexShrink:0,overflowX:"auto"}}>
+      {/* Nav */}
+      <div style={{background:T.nav,borderBottom:`1px solid ${T.border}`,padding:"0 14px",display:"flex",gap:2,flexShrink:0,overflowX:"auto"}}>
         {TABS.map(t=>(
-          <button key={t.id} className={"tab-btn"+(tab===t.id?" active":"")} onClick={()=>setTab(t.id)}>
+          <button key={t.id} style={{background:tab===t.id?"rgba(128,128,128,.15)":"none",border:"none",cursor:"pointer",padding:"10px 14px",fontFamily:"'DM Sans',sans-serif",fontSize:13,fontWeight:500,borderRadius:8,transition:"all .2s",display:"flex",alignItems:"center",gap:6,whiteSpace:"nowrap",color:tab===t.id?T.text:T.muted}} onClick={()=>setTab(t.id)}>
             {t.icon} {t.label}
-            {t.badge>0&&<span style={{background:"rgba(255,255,255,.1)",color:t.badgeColor||"#aaa",fontSize:10,fontWeight:700,padding:"1px 7px",borderRadius:10,marginLeft:2}}>{t.badge}</span>}
+            {t.badge>0&&<span style={{background:T.accent+"33",color:t.bc||T.accent,fontSize:10,fontWeight:700,padding:"1px 7px",borderRadius:10,marginLeft:2}}>{t.badge}</span>}
           </button>
         ))}
       </div>
 
-      {/* ── Content ── */}
+      {/* Content */}
       <div style={{flex:1,overflowY:"auto",padding:20}}>
 
-        {/* ════ DASHBOARD ════ */}
+        {/* ═══ DASHBOARD ═══ */}
         {tab==="dashboard"&&(
           <div className="fu">
-            <h1 style={{fontFamily:"'Bebas Neue'",fontSize:28,letterSpacing:2,marginBottom:3}}>GOOD {new Date().getHours()<12?"MORNING":new Date().getHours()<17?"AFTERNOON":"EVENING"}, {user?.first_name?.toUpperCase()}</h1>
-            <p style={{fontSize:12,color:"#444",marginBottom:20}}>{new Date().toLocaleDateString("en-CA",{weekday:"long",month:"long",day:"numeric",year:"numeric"})}</p>
-            {invLoad&&<div className="notice warn" style={{display:"flex",alignItems:"center",gap:10,marginBottom:18}}><span className="spin" style={{borderTopColor:"#FF9500",borderColor:"rgba(255,149,0,.3)"}}></span>Loading live inventory from houseofcars.com…</div>}
-            {invErr&&<div className="notice error" style={{marginBottom:18}}>⚠️ {invErr} <button className="btn-sm" style={{marginLeft:12,fontSize:11}} onClick={()=>loadInv()}>Retry</button></div>}
-
+            <h1 style={{fontFamily:"'Bebas Neue'",fontSize:28,letterSpacing:2,marginBottom:3,color:T.text}}>
+              GOOD {new Date().getHours()<12?"MORNING":new Date().getHours()<17?"AFTERNOON":"EVENING"}, {user?.first_name?.toUpperCase()}
+            </h1>
+            <p style={{fontSize:12,color:T.muted,marginBottom:20}}>{new Date().toLocaleDateString("en-CA",{weekday:"long",month:"long",day:"numeric",year:"numeric"})}{user?.location&&" · "+user.location}</p>
+            {invLoad&&<div style={{...nWarn,display:"flex",alignItems:"center",gap:10,marginBottom:18}}><span className="spin" style={{borderTopColor:"#FF9500",borderColor:"rgba(255,149,0,.2)"}}></span>Loading live inventory…</div>}
+            {invErr&&<div style={{...nErr,marginBottom:18}}>⚠️ {invErr} <button style={{...btnS,marginLeft:12,fontSize:11}} onClick={()=>loadInv()}>Retry</button></div>}
             <div style={{display:"flex",gap:14,marginBottom:20,flexWrap:"wrap"}}>
               {[
-                {label:"Total Clients",value:clients.length,color:"#E63946",tab:"clients"},
-                {label:"Hot Leads",value:clients.filter(c=>c.status==="Hot").length,color:"#FF3B30",tab:"clients"},
-                {label:"Live Inventory",value:invLoad?"…":inv.length,color:"#0A84FF",tab:"inventory"},
-                {label:"Ad Drafts",value:posts.filter(p=>p.status==="Draft").length,color:"#FF9500",tab:"social"},
-                {label:"Posted Ads",value:posts.filter(p=>p.status==="Posted").length,color:"#34C759",tab:"social"},
+                {label:"My Clients",    v:visC.length,                                    c:T.accent,  t:"clients"},
+                {label:"Hot Leads",     v:visC.filter(c=>c.status==="Hot").length,         c:"#FF3B30", t:"clients"},
+                {label:"Lead Pool",     v:pool.length,                                    c:"#FF9500", t:"pool"},
+                {label:"Live Inventory",v:invLoad?"…":inv.length,                         c:"#0A84FF", t:"inventory"},
+                {label:"Ad Drafts",     v:posts.filter(p=>p.status==="Draft").length,      c:"#34C759", t:"drafts"},
               ].map(s=>(
-                <div key={s.label} className="card" style={{minWidth:100,flex:1,cursor:"pointer"}} onClick={()=>setTab(s.tab)}>
-                  <div style={{fontSize:26,fontFamily:"'Bebas Neue'",color:s.color}}>{s.value}</div>
-                  <div style={{fontSize:11,fontWeight:600,color:"#666"}}>{s.label}</div>
+                <div key={s.label} style={{...card,minWidth:100,flex:1,cursor:"pointer"}} onClick={()=>setTab(s.t)}>
+                  <div style={{fontSize:26,fontFamily:"'Bebas Neue'",color:s.c}}>{s.v}</div>
+                  <div style={{fontSize:11,fontWeight:600,color:T.muted}}>{s.label}</div>
                 </div>
               ))}
             </div>
-
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
-              <div className="card">
-                <div style={{fontSize:11,fontWeight:700,color:"#E63946",marginBottom:12,letterSpacing:1,textTransform:"uppercase"}}>🔥 Hot Leads</div>
-                {clients.filter(c=>c.status==="Hot").length===0&&<p style={{fontSize:13,color:"#444",padding:"8px 0"}}>No hot leads yet.</p>}
-                {clients.filter(c=>c.status==="Hot").slice(0,5).map(c=>(
-                  <div key={c.id} style={{display:"flex",justifyContent:"space-between",padding:"9px 0",borderBottom:"1px solid #14141e",cursor:"pointer"}} onClick={()=>{setSelC(c);setTab("clients");}}>
-                    <div>
-                      <div style={{fontSize:13,fontWeight:600}}>{c.name}</div>
-                      <div style={{fontSize:11,color:"#444"}}>{c.interested_in||"No vehicle paired"}</div>
-                    </div>
-                    <span style={{fontSize:11,color:"#333",whiteSpace:"nowrap",marginLeft:8}}>{fmtDate(c.last_contact)}</span>
+              <div style={card}>
+                <div style={{fontSize:11,fontWeight:700,color:T.accent,marginBottom:12,letterSpacing:1,textTransform:"uppercase"}}>🔥 Hot Leads</div>
+                {visC.filter(c=>c.status==="Hot").length===0&&<p style={{fontSize:13,color:T.muted}}>No hot leads yet.</p>}
+                {visC.filter(c=>c.status==="Hot").slice(0,5).map(c=>(
+                  <div key={c.id} style={{display:"flex",justifyContent:"space-between",padding:"9px 0",borderBottom:`1px solid ${T.border}`,cursor:"pointer"}} onClick={()=>{setSelC(c);setTab("clients");}}>
+                    <div><div style={{fontSize:13,fontWeight:600,color:T.text}}>{c.name}</div><div style={{fontSize:11,color:T.muted}}>{c.interested_in||"No vehicle paired"}</div></div>
+                    <span style={{fontSize:11,color:T.muted,whiteSpace:"nowrap",marginLeft:8}}>{fmtDate(c.last_contact)}</span>
                   </div>
                 ))}
-                <button className="btn-sm" style={{marginTop:10,width:"100%",fontSize:12}} onClick={()=>setTab("clients")}>View All Clients →</button>
+                <button style={{...btnS,marginTop:10,width:"100%",fontSize:12}} onClick={()=>setTab("clients")}>View All Clients →</button>
               </div>
-              <div className="card">
+              <div style={card}>
                 <div style={{fontSize:11,fontWeight:700,color:"#0A84FF",marginBottom:12,letterSpacing:1,textTransform:"uppercase"}}>🚗 Latest Inventory</div>
-                {invLoad?[1,2,3,4].map(i=><div key={i} style={{display:"flex",gap:10,padding:"9px 0",borderBottom:"1px solid #14141e"}}><div className="skeleton" style={{flex:1}}></div><div className="skeleton" style={{width:60}}></div></div>):
-                  inv.slice(0,5).map((v,i)=>(
-                    <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"9px 0",borderBottom:"1px solid #14141e"}}>
-                      <div><div style={{fontSize:13,fontWeight:600}}>{v.year} {v.make} {v.model}</div><div style={{fontSize:11,color:"#444"}}>{v.location}</div></div>
-                      <span style={{fontSize:12,fontWeight:700,color:"#E63946",whiteSpace:"nowrap",marginLeft:8}}>{fmtCur(v.price)}</span>
-                    </div>
-                  ))
-                }
-                <button className="btn-sm" style={{marginTop:10,width:"100%",fontSize:12}} onClick={()=>setTab("inventory")}>View All {inv.length} Vehicles →</button>
+                {invLoad?[1,2,3,4].map(i=><div key={i} style={{display:"flex",gap:10,padding:"9px 0",borderBottom:`1px solid ${T.border}`}}><div className="skeleton" style={{flex:1}}></div><div className="skeleton" style={{width:60}}></div></div>):
+                inv.slice(0,5).map((v,i)=>(
+                  <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"9px 0",borderBottom:`1px solid ${T.border}`}}>
+                    <div><div style={{fontSize:13,fontWeight:600,color:T.text}}>{v.year} {v.make} {v.model}</div><div style={{fontSize:11,color:T.muted}}>{v.location}</div></div>
+                    <span style={{fontSize:12,fontWeight:700,color:T.accent,whiteSpace:"nowrap",marginLeft:8}}>{fmtCur(v.price)}</span>
+                  </div>
+                ))}
+                <button style={{...btnS,marginTop:10,width:"100%",fontSize:12}} onClick={()=>setTab("inventory")}>View All {inv.length} →</button>
               </div>
             </div>
           </div>
         )}
 
-        {/* ════ CLIENTS ════ */}
+        {/* ═══ CLIENTS ═══ */}
         {tab==="clients"&&(
           <div className="fu">
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:10}}>
-              <div><h2 style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:2}}>CLIENTS</h2><p style={{fontSize:12,color:"#444"}}>{clients.length} contacts saved to database</p></div>
-              <button className="btn-red" onClick={()=>{setCf({name:"",phone:"",email:"",location:"",status:"Warm",notes:"",interested_in:"",paired_vehicle_stock:""});setAddC(true);}}>+ Add New Client</button>
+              <div>
+                <h2 style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:2,color:T.text}}>CLIENTS</h2>
+                <p style={{fontSize:12,color:T.muted}}>{visC.length} contacts · {isAdmin?"All locations":isManager?"Your location ("+user?.location+")":"Your leads only"}</p>
+              </div>
+              <button style={btnP} onClick={()=>{setCf({name:"",phone:"",email:"",location:"",status:"Warm",notes:"",interested_in:"",paired_vehicle_stock:""});setAddC(true);}}>+ Add New Client</button>
             </div>
-            {cMsg.t&&<div className={"notice "+cMsg.type+" fu"}>{cMsg.t}</div>}
-
-            <input className="inp" placeholder="🔍 Search clients by name, email, phone…" value={cSearch} onChange={e=>setCSearch(e.target.value)} style={{marginBottom:14}}/>
-
+            {cMsg.t&&<div style={cMsg.type==="error"?nErr:nOk} className="fu">{cMsg.t}</div>}
+            <input style={{...inp,marginBottom:14}} placeholder="🔍 Search by name, email, phone…" value={cSearch} onChange={e=>setCSearch(e.target.value)}/>
             <div style={{display:"grid",gridTemplateColumns:selC?"1fr 390px":"1fr",gap:18,alignItems:"start"}}>
-              <div className="card" style={{padding:0,overflow:"hidden"}}>
-                {cLoad?<div style={{padding:20,color:"#555",textAlign:"center"}}>Loading clients…</div>:
-                 filtClients.length===0?<div style={{padding:30,color:"#555",textAlign:"center"}}>{cSearch?"No clients match your search.":"No clients yet — add your first one!"}</div>:
-                 filtClients.map(c=>(
-                  <div key={c.id} className={"lead-row"+(selC?.id===c.id?" sel":"")} onClick={()=>setSelC(c)}>
-                    <div style={{width:38,height:38,borderRadius:"50%",background:"#181828",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:"#E63946",flexShrink:0}}>
+              <div style={{...card,padding:0,overflow:"hidden"}}>
+                {cLoad?<div style={{padding:20,color:T.muted,textAlign:"center"}}>Loading…</div>:
+                 filtC.length===0?<div style={{padding:30,color:T.muted,textAlign:"center"}}>{cSearch?"No matches.":"No clients yet!"}</div>:
+                 filtC.map(c=>(
+                  <div key={c.id} style={{display:"flex",alignItems:"center",gap:12,padding:"13px 16px",cursor:"pointer",borderBottom:`1px solid ${T.border}`,background:selC?.id===c.id?T.accent+"15":"transparent",borderLeft:selC?.id===c.id?`3px solid ${T.accent}`:"3px solid transparent",transition:"background .15s"}} onClick={()=>setSelC(c)}>
+                    <div style={{width:38,height:38,borderRadius:"50%",background:T.accent+"22",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:T.accent,flexShrink:0}}>
                       {c.name.split(" ").map(n=>n[0]).join("").slice(0,2)}
                     </div>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{display:"flex",alignItems:"center",gap:8}}>
-                        <span style={{fontSize:14,fontWeight:600}}>{c.name}</span>
-                        <span style={{padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:700,background:STATUS_C[c.status]?.bg||"#555",color:"#fff"}}>{c.status}</span>
+                        <span style={{fontSize:14,fontWeight:600,color:T.text}}>{c.name}</span>
+                        <span style={{padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:700,background:STATUS_C[c.status]||"#555",color:"#fff"}}>{c.status}</span>
                       </div>
-                      <div style={{fontSize:12,color:"#444",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.interested_in||"No vehicle paired"} {c.location?"· "+c.location:""}</div>
+                      <div style={{fontSize:12,color:T.muted,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.interested_in||"No vehicle"} {c.location?"· "+c.location:""}</div>
                     </div>
-                    <span style={{fontSize:11,color:"#333",flexShrink:0,marginLeft:8}}>{fmtDate(c.last_contact)}</span>
+                    <span style={{fontSize:11,color:T.muted,flexShrink:0,marginLeft:8}}>{fmtDate(c.last_contact)}</span>
                   </div>
                 ))}
               </div>
 
               {selC&&(
-                <div className="card fu" style={{position:"sticky",top:0}}>
+                <div style={{...card,position:"sticky",top:0}} className="fu">
                   <div style={{display:"flex",justifyContent:"space-between",marginBottom:16}}>
                     <div>
-                      <h3 style={{fontSize:17,fontWeight:700}}>{selC.name}</h3>
-                      <span style={{padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700,background:STATUS_C[selC.status]?.bg||"#555",color:"#fff",display:"inline-block",marginTop:5}}>{selC.status}</span>
+                      <h3 style={{fontSize:17,fontWeight:700,color:T.text}}>{selC.name}</h3>
+                      <span style={{padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700,background:STATUS_C[selC.status]||"#555",color:"#fff",display:"inline-block",marginTop:5}}>{selC.status}</span>
                     </div>
-                    <button style={{background:"none",border:"none",color:"#444",cursor:"pointer",fontSize:22,lineHeight:1}} onClick={()=>setSelC(null)}>×</button>
+                    <button style={{background:"none",border:"none",color:T.muted,cursor:"pointer",fontSize:22}} onClick={()=>setSelC(null)}>×</button>
                   </div>
-                  <div style={{display:"grid",gap:8,marginBottom:14}}>
-                    {selC.phone&&<div style={{display:"flex",gap:10,fontSize:13,color:"#888",alignItems:"center"}}><span>📞</span><a href={"tel:"+selC.phone} style={{color:"#888",textDecoration:"none"}}>{selC.phone}</a></div>}
-                    {selC.email&&<div style={{display:"flex",gap:10,fontSize:13,color:"#888",alignItems:"center"}}><span>✉️</span><a href={"mailto:"+selC.email} style={{color:"#888",textDecoration:"none"}}>{selC.email}</a></div>}
-                    {selC.location&&<div style={{display:"flex",gap:10,fontSize:13,color:"#888",alignItems:"center"}}><span>📍</span><span>{selC.location}</span></div>}
+                  <div style={{display:"grid",gap:7,marginBottom:14}}>
+                    {selC.phone&&<div style={{display:"flex",gap:10,fontSize:13,color:T.muted}}><span>📞</span><a href={"tel:"+selC.phone} style={{color:T.muted,textDecoration:"none"}}>{selC.phone}</a></div>}
+                    {selC.email&&<div style={{display:"flex",gap:10,fontSize:13,color:T.muted}}><span>✉️</span><a href={"mailto:"+selC.email} style={{color:T.muted,textDecoration:"none"}}>{selC.email}</a></div>}
+                    {selC.location&&<div style={{display:"flex",gap:10,fontSize:13,color:T.muted}}><span>📍</span><span>{selC.location}</span></div>}
+                    <div style={{display:"flex",gap:10,fontSize:11,color:T.muted}}><span>👤</span><span>Created by {users.find(u=>u.id===selC.created_by)?.first_name||"Unknown"} · {selC.assigned_location}</span></div>
                   </div>
-                  {selC.notes&&(
-                    <div style={{background:"#0D0D14",borderRadius:10,padding:12,marginBottom:14}}>
-                      <div style={{fontSize:10,color:"#444",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:5}}>Notes</div>
-                      <p style={{fontSize:13,color:"#777",lineHeight:1.7}}>{selC.notes}</p>
-                    </div>
-                  )}
-                  <div style={{marginBottom:16}}>
-                    <div style={{fontSize:10,color:"#444",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Paired Vehicle</div>
+                  {selC.notes&&<div style={{background:T.bg,borderRadius:10,padding:12,marginBottom:14}}>
+                    <div style={{fontSize:10,color:T.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:5}}>Notes</div>
+                    <p style={{fontSize:13,color:T.muted,lineHeight:1.7}}>{selC.notes}</p>
+                  </div>}
+                  <div style={{marginBottom:14}}>
+                    <div style={{fontSize:10,color:T.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Paired Vehicle</div>
                     {selC.interested_in?(
-                      <div style={{background:"rgba(230,57,70,.07)",border:"1px solid rgba(230,57,70,.2)",borderRadius:10,padding:12}}>
-                        <div style={{fontSize:13,fontWeight:700}}>{selC.interested_in}</div>
-                        {selC.paired_vehicle_stock&&<div style={{fontSize:12,color:"#555",marginTop:2}}>Stock #{selC.paired_vehicle_stock}</div>}
-                        <div style={{display:"flex",gap:8,marginTop:10}}>
-                          <button className="btn-sm" style={{fontSize:11}} onClick={()=>{setCSearch("");setPairModal(selC);}}>Change</button>
-                          <button className="btn-sm" style={{fontSize:11}} onClick={()=>openDraft(inv.find(v=>v.stock===selC.paired_vehicle_stock)||null)}>📝 Draft Ad</button>
+                      <div style={{background:T.accent+"11",border:`1px solid ${T.accent}33`,borderRadius:10,padding:12}}>
+                        <div style={{fontSize:13,fontWeight:700,color:T.text}}>{selC.interested_in}</div>
+                        {selC.paired_vehicle_stock&&<div style={{fontSize:12,color:T.muted,marginTop:2}}>Stock #{selC.paired_vehicle_stock}</div>}
+                        <div style={{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"}}>
+                          <button style={{...btnS,fontSize:11}} onClick={()=>{setVSearch("");setPairModal(selC);}}>Change</button>
+                          <button style={{...btnS,fontSize:11}} onClick={()=>openDraft(inv.find(v=>v.stock===selC.paired_vehicle_stock)||null)}>📝 Draft Ad</button>
                         </div>
                       </div>
-                    ):(
-                      <button className="btn-sm" style={{width:"100%"}} onClick={()=>{setCSearch("");setPairModal(selC);}}>+ Pair a Vehicle</button>
-                    )}
+                    ):<button style={{...btnS,width:"100%"}} onClick={()=>{setVSearch("");setPairModal(selC);}}>+ Pair a Vehicle</button>}
+                  </div>
+                  {/* Lead Pool */}
+                  <div style={{marginBottom:14}}>
+                    <div style={{fontSize:10,color:T.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Lead Pool</div>
+                    {pool.find(p=>p.client_id===selC.id)?
+                      <div style={{...nWarn,marginBottom:0,fontSize:12}}>🎯 Already in the Lead Pool.</div>:
+                      <div style={{display:"grid",gap:8}}>
+                        <textarea style={{...inp,minHeight:56,fontSize:12,resize:"none"}} placeholder="Optional note for other reps…" value={poolNote} onChange={e=>setPoolNote(e.target.value)}/>
+                        <button style={{...btnS,color:"#FF9500",borderColor:"rgba(255,149,0,.4)"}} onClick={()=>addToPool(selC)}>🎯 Add to Lead Pool</button>
+                      </div>}
                   </div>
                   <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                    <button className="btn-red" style={{flex:1,fontSize:12}} onClick={()=>{setCf({name:selC.name,phone:selC.phone||"",email:selC.email||"",location:selC.location||"",status:selC.status,notes:selC.notes||"",interested_in:selC.interested_in||"",paired_vehicle_stock:selC.paired_vehicle_stock||""});setEditC(true);}}>✏️ Edit Client</button>
-                    <button className="btn-sm" style={{color:"#E63946",fontSize:12}} onClick={()=>deleteClient(selC.id)}>🗑️ Delete</button>
+                    <button style={{...btnP,flex:1,fontSize:12}} onClick={()=>{setCf({name:selC.name,phone:selC.phone||"",email:selC.email||"",location:selC.location||"",status:selC.status,notes:selC.notes||"",interested_in:selC.interested_in||"",paired_vehicle_stock:selC.paired_vehicle_stock||""});setEditC(true);}}>✏️ Edit</button>
+                    <button style={{...btnS,color:"#E63946",fontSize:12}} onClick={()=>deleteClient(selC.id)}>🗑️</button>
                   </div>
                 </div>
               )}
@@ -604,54 +740,110 @@ function App(){
           </div>
         )}
 
-        {/* ════ INVENTORY ════ */}
+        {/* ═══ LEAD POOL ═══ */}
+        {tab==="pool"&&(
+          <div className="fu">
+            <div style={{marginBottom:18}}>
+              <h2 style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:2,color:T.text}}>LEAD POOL</h2>
+              <p style={{fontSize:12,color:T.muted}}>{pool.length} leads available · Claim one to take it as your own</p>
+            </div>
+            {poolMsg.t&&<div style={poolMsg.type==="error"?nErr:nOk} className="fu">{poolMsg.t}</div>}
+            {poolLoad?<div style={{color:T.muted}}>Loading…</div>:
+             pool.length===0?
+               <div style={{...card,textAlign:"center",padding:48}}>
+                 <div style={{fontSize:40,marginBottom:12}}>🎯</div>
+                 <div style={{fontSize:16,fontWeight:700,marginBottom:8,color:T.text}}>Lead Pool is empty</div>
+                 <p style={{fontSize:13,color:T.muted}}>When a rep can't reach a client they add them here. You'll get notified automatically.</p>
+               </div>:
+             pool.map(item=>(
+               <div key={item.id} style={{...card,marginBottom:14}}>
+                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
+                   <div style={{flex:1}}>
+                     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                       <div style={{fontSize:15,fontWeight:700,color:T.text}}>{item.client?.name||"Unknown"}</div>
+                       <span style={{padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:700,background:STATUS_C[item.client?.status]||"#555",color:"#fff"}}>{item.client?.status}</span>
+                     </div>
+                     {item.client?.phone&&<div style={{fontSize:12,color:T.muted,marginBottom:3}}>📞 {item.client.phone}</div>}
+                     {item.client?.email&&<div style={{fontSize:12,color:T.muted,marginBottom:3}}>✉️ {item.client.email}</div>}
+                     {item.client?.interested_in&&<div style={{fontSize:12,color:T.muted,marginBottom:3}}>🚗 {item.client.interested_in}</div>}
+                     {item.note&&<div style={{background:T.bg,borderRadius:8,padding:"8px 12px",marginTop:8,fontSize:12,color:T.muted}}>💬 "{item.note}"</div>}
+                     <div style={{fontSize:11,color:T.muted,marginTop:8}}>Added by {item.adder?.first_name} {item.adder?.last_name} ({item.adder?.location}) · {fmtDate(item.created_at)}</div>
+                   </div>
+                   {item.added_by!==user?.id?
+                     <button style={{...btnP,fontSize:12,whiteSpace:"nowrap"}} className="pool-btn" onClick={()=>claimFromPool(item)}>🙋 Claim Lead</button>:
+                     <span style={{fontSize:11,color:T.muted,padding:"6px 12px",background:T.bg,borderRadius:7}}>Your lead</span>
+                   }
+                 </div>
+               </div>
+             ))}
+          </div>
+        )}
+
+        {/* ═══ INVENTORY ═══ */}
         {tab==="inventory"&&(
           <div className="fu">
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14,flexWrap:"wrap",gap:10}}>
               <div>
-                <h2 style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:2}}>LIVE INVENTORY</h2>
-                <p style={{fontSize:12,color:"#444"}}>{invLoad?"Fetching from houseofcars.com…":inv.length+" vehicles"+(synced?" · last synced "+synced:"")}</p>
+                <h2 style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:2,color:T.text}}>LIVE INVENTORY</h2>
+                <p style={{fontSize:12,color:T.muted}}>{invLoad?"Fetching…":filtInv.length+" of "+inv.length+" vehicles"+(synced?" · synced "+synced:"")}</p>
               </div>
-              <button className="btn-red" onClick={()=>loadInv(true)} disabled={syncing||invLoad} style={{display:"flex",alignItems:"center",gap:8}}>
-                {syncing?<><span className="spin"></span>Syncing…</>:"🔄 Sync Live Inventory"}
+              <button style={{...btnP,display:"flex",alignItems:"center",gap:8}} onClick={()=>loadInv(true)} disabled={syncing||invLoad}>
+                {syncing?<><span className="spin"></span>Syncing…</>:"🔄 Sync"}
               </button>
             </div>
-            {syncMsg.t&&<div className={"notice "+syncMsg.type+" fu"}>{syncMsg.t}</div>}
-            {invLoad&&<div className="card" style={{padding:0,overflow:"hidden"}}>{[1,2,3,4,5,6].map(i=><div key={i} style={{display:"flex",gap:16,padding:"12px 16px",borderBottom:"1px solid #12121c"}}>{[80,60,80,120,70,100,60,70].map((w,j)=><div key={j} className="skeleton" style={{width:w,flexShrink:0}}></div>)}</div>)}</div>}
-            {!invLoad&&<>
-              <div style={{display:"flex",gap:10,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
-                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                  {invTypes.map(t=><button key={t} onClick={()=>setIFilter(t)} style={{background:iFilter===t?"#E63946":"rgba(255,255,255,.05)",color:iFilter===t?"#fff":"#777",border:"1px solid",borderColor:iFilter===t?"#E63946":"#252535",borderRadius:7,padding:"6px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans'"}}>{t}</button>)}
-                </div>
-                <select className="inp" style={{width:"auto",minWidth:160,fontSize:12,padding:"6px 12px"}} value={iLoc} onChange={e=>setILoc(e.target.value)}>
-                  {invLocs.map(l=><option key={l} value={l}>{l==="All"?"All Locations":"📍 "+l}</option>)}
-                </select>
-                <span style={{fontSize:11,color:"#444",marginLeft:"auto"}}>{filtInv.length} vehicles shown</span>
+            {syncMsg.t&&<div style={syncMsg.type==="success"?nOk:nErr} className="fu">{syncMsg.t}</div>}
+            {/* Sort pills */}
+            <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
+              <span style={{fontSize:11,color:T.muted,fontWeight:700}}>SORT:</span>
+              {[["price","💰 Price"],["year","📅 Year"],["mileage","🔢 KM"],["make","🔤 Make"],["location","📍 Location"]].map(([col,lbl])=>(
+                <button key={col} onClick={()=>toggleSort(col)} style={{...btnS,fontSize:11,background:iSort.col===col?T.accent+"22":"rgba(128,128,128,.08)",color:iSort.col===col?T.accent:T.muted,borderColor:iSort.col===col?T.accent+"44":T.border}}>
+                  {lbl}{arr(col)}
+                </button>
+              ))}
+            </div>
+            <div style={{display:"flex",gap:10,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
+              <input style={{...inp,maxWidth:260,fontSize:12,padding:"8px 12px"}} placeholder="🔍 Search make, model, stock…" value={iSearch} onChange={e=>setISearch(e.target.value)}/>
+              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                {invTypes.map(t=><button key={t} onClick={()=>setIFilter(t)} style={{...btnS,background:iFilter===t?T.accent:"rgba(128,128,128,.08)",color:iFilter===t?"#fff":T.muted,borderColor:iFilter===t?T.accent:T.border,fontSize:11}}>{t}</button>)}
               </div>
-              <div className="card" style={{padding:0,overflow:"hidden"}}>
+              <select style={{...inp,width:"auto",minWidth:150,fontSize:12,padding:"7px 12px"}} value={iLoc} onChange={e=>setILoc(e.target.value)}>
+                {invLocs.map(l=><option key={l} value={l}>{l==="All"?"All Locations":"📍 "+l}</option>)}
+              </select>
+              <span style={{fontSize:11,color:T.muted,marginLeft:"auto"}}>{filtInv.length} shown</span>
+            </div>
+            {invLoad&&<div style={{...card,padding:0,overflow:"hidden"}}>{[1,2,3,4,5].map(i=><div key={i} style={{display:"flex",gap:16,padding:"12px 16px",borderBottom:`1px solid ${T.border}`}}>{[80,60,80,100,70,80,60,60].map((w,j)=><div key={j} className="skeleton" style={{width:w,flexShrink:0}}></div>)}</div>)}</div>}
+            {!invLoad&&(
+              <div style={{...card,padding:0,overflow:"hidden"}}>
                 <div style={{overflowX:"auto"}}>
                   <table style={{width:"100%",borderCollapse:"collapse"}}>
-                    <thead><tr style={{background:"#0D0D14"}}>
-                      {[["stock","Stock"],["year","Year"],["make","Make"],["model","Model"],["price","Price"],["location","Location"],["type","Type"],["mileage","KM"]].map(([c,l])=>(
-                        <th key={c} onClick={()=>toggleSort(c)}>{l}{arr(c)}</th>
+                    <thead><tr style={{background:T.bg}}>
+                      {[["year","Year"],["make","Make"],["model","Model"],["price","Price"],["mileage","KM"],["color","Colour"],["location","Location"],["type","Type"],["stock","Stock #"]].map(([c,l])=>(
+                        <th key={c} onClick={()=>toggleSort(c)} style={{color:iSort.col===c?T.accent:T.muted,borderBottomColor:T.border,padding:"10px 14px",textAlign:"left",fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:".7px",cursor:"pointer",userSelect:"none",whiteSpace:"nowrap"}}>
+                          {l}{arr(c)}
+                        </th>
                       ))}
-                      <th>Actions</th>
+                      <th style={{color:T.muted,borderBottomColor:T.border,padding:"10px 14px",fontSize:11,fontWeight:600,textTransform:"uppercase"}}>Actions</th>
                     </tr></thead>
                     <tbody>
                       {filtInv.map((v,i)=>(
                         <tr key={i}>
-                          <td><span style={{fontFamily:"monospace",fontSize:11,color:"#555"}}>{v.stock}</span></td>
-                          <td style={{fontWeight:700}}>{v.year}</td>
-                          <td>{v.make}</td>
-                          <td>{v.model}</td>
-                          <td style={{color:"#E63946",fontWeight:700}}>{fmtCur(v.price)}</td>
-                          <td><span style={{fontSize:11,background:"rgba(255,255,255,.04)",border:"1px solid #252535",borderRadius:5,padding:"2px 8px",whiteSpace:"nowrap"}}>📍 {v.location}</span></td>
-                          <td>{v.type&&<span className="tag">{v.type}</span>}</td>
-                          <td style={{color:"#555",fontSize:12}}>{v.mileage}</td>
-                          <td>
-                            <div style={{display:"flex",gap:6,flexWrap:"nowrap"}}>
-                              <button className="btn-sm" style={{fontSize:11,padding:"4px 10px",whiteSpace:"nowrap"}} onClick={()=>openDraft(v)}>📝 Draft Ad</button>
-                              {v.listingUrl&&<a href={v.listingUrl} target="_blank" rel="noopener noreferrer" style={{fontSize:11,padding:"4px 9px",background:"rgba(255,255,255,.07)",color:"#bbb",border:"1px solid #2a2a38",borderRadius:7,textDecoration:"none",whiteSpace:"nowrap"}}>↗ View</a>}
+                          <td style={{fontWeight:700,borderBottomColor:T.border,color:T.text,padding:"10px 14px",fontSize:13}}>{v.year}</td>
+                          <td style={{borderBottomColor:T.border,color:T.text,padding:"10px 14px",fontSize:13}}>{v.make}</td>
+                          <td style={{borderBottomColor:T.border,color:T.text,padding:"10px 14px",fontSize:13}}>{v.model}</td>
+                          <td style={{color:T.accent,fontWeight:700,borderBottomColor:T.border,padding:"10px 14px",fontSize:13}}>{fmtCur(v.price)}</td>
+                          <td style={{color:T.muted,fontSize:12,borderBottomColor:T.border,padding:"10px 14px"}}>{v.mileage}</td>
+                          <td style={{color:T.muted,fontSize:12,borderBottomColor:T.border,padding:"10px 14px"}}>{v.color||"—"}</td>
+                          <td style={{borderBottomColor:T.border,padding:"10px 14px"}}>
+                            <span style={{fontSize:11,background:T.bg,border:`1px solid ${T.border}`,borderRadius:5,padding:"2px 8px",color:T.text,whiteSpace:"nowrap"}}>📍 {v.location}</span>
+                          </td>
+                          <td style={{borderBottomColor:T.border,padding:"10px 14px"}}>
+                            {v.type&&<span style={{display:"inline-block",padding:"2px 9px",borderRadius:6,fontSize:11,fontWeight:700,background:T.accent+"22",color:T.accent,border:`1px solid ${T.accent}44`}}>{v.type}</span>}
+                          </td>
+                          <td style={{fontFamily:"monospace",fontSize:11,color:T.muted,borderBottomColor:T.border,padding:"10px 14px"}}>{v.stock}</td>
+                          <td style={{borderBottomColor:T.border,padding:"10px 14px"}}>
+                            <div style={{display:"flex",gap:6}}>
+                              <button style={{...btnS,fontSize:11,padding:"4px 10px"}} onClick={()=>openDraft(v)}>📝 Ad</button>
+                              {v.listingUrl&&<a href={v.listingUrl} target="_blank" rel="noopener noreferrer" style={{...btnS,fontSize:11,padding:"4px 9px",textDecoration:"none"}}>↗</a>}
                             </div>
                           </td>
                         </tr>
@@ -660,132 +852,140 @@ function App(){
                   </table>
                 </div>
               </div>
-            </>}
+            )}
           </div>
         )}
 
-        {/* ════ AD DRAFTS ════ */}
-        {tab==="social"&&(
+        {/* ═══ AD DRAFTS ═══ */}
+        {tab==="drafts"&&(
           <div className="fu">
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:10}}>
-              <div><h2 style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:2}}>AD DRAFTS</h2><p style={{fontSize:12,color:"#444"}}>{posts.length} total · {posts.filter(p=>p.status==="Draft").length} drafts · {posts.filter(p=>p.status==="Posted").length} posted</p></div>
-              <button className="btn-red" onClick={()=>openDraft()}>+ New Ad Draft</button>
-            </div>
-            {pMsg.t&&<div className={"notice "+pMsg.type+" fu"}>{pMsg.t}</div>}
-
-            <div className="notice info" style={{marginBottom:20,display:"flex",gap:14,alignItems:"flex-start"}}>
-              <span style={{fontSize:22,flexShrink:0}}>📘</span>
               <div>
-                <div style={{fontWeight:700,marginBottom:4}}>How Facebook Marketplace posting works</div>
-                <div style={{fontSize:12,color:"#4da3ff",lineHeight:1.7}}>Meta does not allow automated Marketplace posts via API. When you click <strong>"Copy & Open Marketplace"</strong>, your ad text is automatically copied to your clipboard and Facebook Marketplace opens in a new tab. Just paste your text, fill in the vehicle details, and publish. Full Facebook Page posting (not Marketplace) can be set up via a Facebook Developer App — see the Accounts tab for instructions.</div>
+                <h2 style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:2,color:T.text}}>AD DRAFTS</h2>
+                <p style={{fontSize:12,color:T.muted}}>{posts.length} total · {posts.filter(p=>p.status==="Draft").length} drafts · {posts.filter(p=>p.status==="Posted").length} posted</p>
+              </div>
+              <button style={btnP} onClick={()=>openDraft()}>+ New Ad Draft</button>
+            </div>
+            {pMsg.t&&<div style={pMsg.type==="error"?nErr:nOk} className="fu">{pMsg.t}</div>}
+            <div style={{...nInfo,marginBottom:20,display:"flex",gap:14,alignItems:"flex-start"}}>
+              <span style={{fontSize:22,flexShrink:0}}>📘</span>
+              <div style={{fontSize:12,lineHeight:1.7}}>
+                <strong>Facebook Marketplace:</strong> Meta blocks automated posting. Click <strong>"Copy & Open Marketplace"</strong> — your ad copies to clipboard and Marketplace opens. Paste, fill in details, and publish.<br/>
+                All ads follow the official HOC template with AMVIC and financing language baked in.
               </div>
             </div>
-
-            {pLoad?<div style={{color:"#555"}}>Loading drafts…</div>:
-             posts.length===0?(
-               <div className="card" style={{textAlign:"center",padding:48}}>
+            {pLoad?<div style={{color:T.muted}}>Loading…</div>:
+             posts.length===0?
+               <div style={{...card,textAlign:"center",padding:48}}>
                  <div style={{fontSize:40,marginBottom:12}}>📝</div>
-                 <div style={{fontSize:16,fontWeight:700,marginBottom:8}}>No ad drafts yet</div>
-                 <p style={{fontSize:13,color:"#555",marginBottom:20}}>Draft ads from any vehicle in your inventory, or start a blank draft.</p>
-                 <button className="btn-red" onClick={()=>openDraft()}>Create Your First Ad Draft</button>
-               </div>
-             ):(
-               <div style={{display:"grid",gap:14}}>
-                 {posts.map(p=>(
-                   <div key={p.id} className="card">
-                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12,gap:10}}>
-                       <div style={{flex:1,minWidth:0}}>
-                         <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{p.vehicle_title||"Untitled Draft"}</div>
-                         <div style={{fontSize:11,color:"#444"}}>
-                           Drafted {fmtDate(p.created_at)} by {users.find(u=>u.id===p.created_by)?.first_name||"Unknown"}
-                           {p.posted_at&&" · Posted "+fmtDate(p.posted_at)}
-                         </div>
+                 <div style={{fontSize:16,fontWeight:700,marginBottom:8,color:T.text}}>No ad drafts yet</div>
+                 <button style={btnP} onClick={()=>openDraft()}>Create First Ad Draft</button>
+               </div>:
+             posts.map(p=>(
+               <div key={p.id} style={{...card,marginBottom:14}}>
+                 <div style={{display:"flex",gap:14,alignItems:"flex-start",marginBottom:12}}>
+                   {p.vehicle_image&&<img src={p.vehicle_image} alt="" style={{width:120,height:80,objectFit:"cover",borderRadius:8,flexShrink:0}} onError={e=>e.target.style.display="none"}/>}
+                   <div style={{flex:1,minWidth:0}}>
+                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10}}>
+                       <div>
+                         <div style={{fontSize:15,fontWeight:700,color:T.text,marginBottom:4}}>{p.vehicle_title||"Untitled Draft"}</div>
+                         <div style={{fontSize:11,color:T.muted}}>{fmtDate(p.created_at)} · by {users.find(u=>u.id===p.created_by)?.first_name||"Unknown"}{p.posted_at&&" · Posted "+fmtDate(p.posted_at)}</div>
                        </div>
-                       <div style={{display:"flex",gap:8,alignItems:"center",flexShrink:0}}>
+                       <div style={{display:"flex",gap:8,flexShrink:0,alignItems:"center"}}>
                          <span style={{fontSize:11,padding:"3px 10px",borderRadius:20,fontWeight:700,background:p.status==="Posted"?"rgba(52,199,89,.15)":"rgba(255,149,0,.15)",color:p.status==="Posted"?"#34C759":"#FF9500",border:"1px solid",borderColor:p.status==="Posted"?"rgba(52,199,89,.3)":"rgba(255,149,0,.3)"}}>{p.status}</span>
-                         <button className="btn-sm" style={{fontSize:11}} onClick={()=>openDraft(null,p)}>✏️ Edit</button>
-                         <button className="btn-sm" style={{fontSize:11,color:"#E63946"}} onClick={()=>deletePost(p.id)}>🗑️</button>
+                         <button style={{...btnS,fontSize:11}} onClick={()=>openDraft(null,p)}>✏️</button>
+                         <button style={{...btnS,fontSize:11,color:"#E63946"}} onClick={()=>deletePost(p.id)}>🗑️</button>
                        </div>
                      </div>
-                     <pre style={{fontSize:12,color:"#666",lineHeight:1.7,whiteSpace:"pre-wrap",fontFamily:"'DM Sans'",background:"#0D0D14",borderRadius:9,padding:"12px 14px",maxHeight:130,overflow:"hidden",borderBottom:"2px solid transparent",position:"relative"}}>{p.draft_text}</pre>
-                     {p.status!=="Posted"&&(
-                       <button className="btn-green" style={{marginTop:12,fontSize:13,display:"flex",alignItems:"center",gap:8}} onClick={()=>{navigator.clipboard.writeText(p.draft_text).catch(()=>{});window.open("https://www.facebook.com/marketplace/create/vehicle","_blank");sb.from("posts").update({status:"Posted",posted_at:new Date().toISOString()}).eq("id",p.id).then(()=>loadPosts());}}>
-                         📋 Copy & Open Facebook Marketplace
-                       </button>
-                     )}
                    </div>
-                 ))}
+                 </div>
+                 <pre style={{fontSize:12,color:T.muted,lineHeight:1.7,whiteSpace:"pre-wrap",fontFamily:"'DM Sans'",background:T.bg,borderRadius:9,padding:"12px 14px",maxHeight:140,overflow:"hidden"}}>{p.draft_text}</pre>
+                 {p.status!=="Posted"&&(
+                   <button style={{marginTop:12,background:"#34C759",color:"#fff",border:"none",borderRadius:9,padding:"10px 18px",fontFamily:"'DM Sans'",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:8}} onClick={()=>{navigator.clipboard.writeText(p.draft_text).catch(()=>{});window.open("https://www.facebook.com/marketplace/create/vehicle","_blank");sb.from("posts").update({status:"Posted",posted_at:new Date().toISOString()}).eq("id",p.id).then(()=>loadPosts());}}>
+                     📋 Copy & Open Facebook Marketplace
+                   </button>
+                 )}
                </div>
-             )}
+             ))}
           </div>
         )}
 
-        {/* ════ ACCOUNTS ════ */}
-        {tab==="accounts"&&(
+        {/* ═══ ACCOUNTS (Admin only) ═══ */}
+        {tab==="accounts"&&isAdmin&&(
           <div className="fu">
-            <div style={{marginBottom:18}}><h2 style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:2}}>ACCOUNTS</h2><p style={{fontSize:12,color:"#444"}}>{users.length} registered users · @houseofcars.com and @houseofcarscalgary.com only</p></div>
-
-            <div className="notice info" style={{marginBottom:20}}>
-              <div style={{fontWeight:700,marginBottom:6}}>📘 Setting up Facebook Page posting</div>
-              <div style={{fontSize:12,color:"#4da3ff",lineHeight:1.8}}>
-                For automated posting to a <strong>Facebook Page</strong> (not Marketplace), you need a Meta Developer App:<br/>
-                1. Go to <a href="https://developers.facebook.com/apps/create/" target="_blank" style={{color:"#fff"}}>developers.facebook.com/apps/create</a> → choose <strong>Business</strong> type<br/>
-                2. Add the <strong>Facebook Login</strong> product<br/>
-                3. Request permissions: <code style={{background:"#1a1a2e",padding:"1px 6px",borderRadius:3}}>pages_manage_posts</code>, <code style={{background:"#1a1a2e",padding:"1px 6px",borderRadius:3}}>pages_read_engagement</code><br/>
-                4. Once approved by Meta (1–2 weeks), share your App ID here and I'll wire it into the CRM so each user can connect their Facebook Page directly from their profile.
-              </div>
+            <div style={{marginBottom:18}}>
+              <h2 style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:2,color:T.text}}>ACCOUNTS</h2>
+              <p style={{fontSize:12,color:T.muted}}>{users.length} registered users · Admin access only</p>
             </div>
-
             <div style={{display:"grid",gridTemplateColumns:"1fr 390px",gap:18,alignItems:"start"}}>
-              <div className="card" style={{padding:0,overflow:"hidden"}}>
+              <div style={{...card,padding:0,overflow:"hidden"}}>
                 <div style={{overflowX:"auto"}}>
                   <table style={{width:"100%",borderCollapse:"collapse"}}>
-                    <thead><tr style={{background:"#0D0D14"}}>
-                      <th>Name</th><th>Email</th><th>Location</th><th>Role</th><th>Joined</th>
+                    <thead><tr style={{background:T.bg}}>
+                      {["Name","Email","Location","Role","Status","Actions"].map(h=>(
+                        <th key={h} style={{color:T.muted,borderBottomColor:T.border,padding:"10px 14px",textAlign:"left",fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:".7px"}}>{h}</th>
+                      ))}
                     </tr></thead>
                     <tbody>
-                      {uLoad?<tr><td colSpan={5} style={{color:"#555",textAlign:"center",padding:20}}>Loading…</td></tr>:
-                       users.length===0?<tr><td colSpan={5} style={{color:"#555",textAlign:"center",padding:20}}>No users yet.</td></tr>:
-                       users.map((u,i)=>(
+                      {uLoad?<tr><td colSpan={6} style={{color:T.muted,textAlign:"center",padding:20,borderBottomColor:T.border}}>Loading…</td></tr>:
+                      users.map((u,i)=>(
                         <tr key={i}>
-                          <td style={{fontWeight:600}}>{u.first_name} {u.last_name} {u.id===user?.id&&<span style={{fontSize:10,color:"#E63946",background:"rgba(230,57,70,.14)",padding:"1px 6px",borderRadius:4,marginLeft:4}}>You</span>}</td>
-                          <td style={{fontSize:12,color:"#666",fontFamily:"monospace"}}>{u.email}</td>
-                          <td><span style={{fontSize:11,background:"rgba(255,255,255,.04)",border:"1px solid #252535",borderRadius:5,padding:"2px 7px"}}>📍 {u.location}</span></td>
-                          <td><span style={{fontSize:11,background:u.role==="Admin"?"rgba(230,57,70,.14)":u.role==="Manager"?"rgba(255,149,0,.14)":"rgba(10,132,255,.14)",color:u.role==="Admin"?"#E63946":u.role==="Manager"?"#FF9500":"#0A84FF",border:"1px solid",borderColor:u.role==="Admin"?"rgba(230,57,70,.3)":u.role==="Manager"?"rgba(255,149,0,.3)":"rgba(10,132,255,.3)",borderRadius:5,padding:"2px 8px",fontWeight:700}}>{u.role}</span></td>
-                          <td style={{fontSize:12,color:"#555"}}>{new Date(u.created_at).toLocaleDateString("en-CA",{month:"short",year:"numeric"})}</td>
+                          <td style={{fontWeight:600,borderBottomColor:T.border,color:T.text,padding:"10px 14px",fontSize:13}}>
+                            {u.first_name} {u.last_name}
+                            {u.id===user?.id&&<span style={{fontSize:10,color:T.accent,background:T.accent+"22",padding:"1px 6px",borderRadius:4,marginLeft:4}}>You</span>}
+                          </td>
+                          <td style={{fontSize:12,color:T.muted,fontFamily:"monospace",borderBottomColor:T.border,padding:"10px 14px"}}>{u.email}</td>
+                          <td style={{borderBottomColor:T.border,padding:"10px 14px"}}>
+                            <span style={{fontSize:11,background:T.bg,border:`1px solid ${T.border}`,borderRadius:5,padding:"2px 7px",color:T.text}}>📍 {u.location}</span>
+                          </td>
+                          <td style={{borderBottomColor:T.border,padding:"10px 14px"}}>
+                            <span style={{fontSize:11,background:u.role==="Admin"?"rgba(230,57,70,.14)":u.role==="Manager"?"rgba(255,149,0,.14)":"rgba(10,132,255,.14)",color:u.role==="Admin"?"#E63946":u.role==="Manager"?"#FF9500":"#0A84FF",border:"1px solid",borderColor:u.role==="Admin"?"rgba(230,57,70,.3)":u.role==="Manager"?"rgba(255,149,0,.3)":"rgba(10,132,255,.3)",borderRadius:5,padding:"2px 8px",fontWeight:700}}>{u.role}</span>
+                          </td>
+                          <td style={{borderBottomColor:T.border,padding:"10px 14px"}}>
+                            <span style={{fontSize:12,fontWeight:700,color:u.status==="active"?"#34C759":"#E63946"}}>{u.status==="active"?"● Active":"● Disabled"}</span>
+                          </td>
+                          <td style={{borderBottomColor:T.border,padding:"10px 14px"}}>
+                            {u.id!==user?.id&&(
+                              <div style={{display:"flex",gap:6}}>
+                                <button style={{...btnS,fontSize:11,padding:"4px 9px"}} onClick={()=>{setResetTarget(u);setResetPw("");setResetMsg("");}}>🔑 Reset PW</button>
+                                <button style={{...btnS,fontSize:11,padding:"4px 9px",color:u.status==="active"?"#E63946":"#34C759",borderColor:u.status==="active"?"rgba(230,57,70,.4)":"rgba(52,199,89,.4)"}} onClick={()=>toggleStatus(u)}>
+                                  {u.status==="active"?"🚫 Disable":"✅ Enable"}
+                                </button>
+                              </div>
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
               </div>
-
-              <div className="card" style={{position:"sticky",top:0}}>
-                <div style={{fontSize:11,fontWeight:700,color:"#E63946",marginBottom:14,letterSpacing:1,textTransform:"uppercase"}}>🔐 Create New Account</div>
-                {rOk&&<div className="notice success">✅ Account created! They can now sign in.</div>}
-                {rErr&&<div className="notice error">⚠️ {rErr}</div>}
+              <div style={{...card,position:"sticky",top:0}}>
+                <div style={{fontSize:11,fontWeight:700,color:T.accent,marginBottom:14,letterSpacing:1,textTransform:"uppercase"}}>🔐 Create New Account</div>
+                {rOk&&<div style={nOk}>✅ Account created!</div>}
+                {rErr&&<div style={nErr}>⚠️ {rErr}</div>}
                 <div style={{display:"grid",gap:10}}>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
-                    <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>First Name</div><input className="inp" placeholder="First" value={rf.firstName} onChange={e=>{setRf(p=>({...p,firstName:e.target.value}));setRErr("");setROk(false);}}/></div>
-                    <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>Last Name</div><input className="inp" placeholder="Last" value={rf.lastName} onChange={e=>{setRf(p=>({...p,lastName:e.target.value}));setRErr("");setROk(false);}}/></div>
+                    <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>First Name</div><input style={inp} placeholder="First" value={rf.firstName} onChange={e=>{setRf(p=>({...p,firstName:e.target.value}));setRErr("");setROk(false);}}/></div>
+                    <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Last Name</div><input style={inp} placeholder="Last" value={rf.lastName} onChange={e=>{setRf(p=>({...p,lastName:e.target.value}));setRErr("");setROk(false);}}/></div>
                   </div>
-                  <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>Work Email</div><input className="inp" placeholder="name@houseofcars.com" value={rf.email} onChange={e=>{setRf(p=>({...p,email:e.target.value}));setRErr("");setROk(false);}}/></div>
-                  <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>Location</div>
-                    <select className="inp" value={rf.location} onChange={e=>setRf(p=>({...p,location:e.target.value}))}>
+                  <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Work Email</div><input style={inp} placeholder="name@houseofcars.com" value={rf.email} onChange={e=>{setRf(p=>({...p,email:e.target.value}));setRErr("");setROk(false);}}/></div>
+                  <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Location</div>
+                    <select style={inp} value={rf.location} onChange={e=>setRf(p=>({...p,location:e.target.value}))}>
                       <option value="">Select…</option>
-                      {HOC_LOCATIONS.map(l=><option key={l} value={l}>{l}</option>)}
+                      {LOCS.map(l=><option key={l} value={l}>{l}</option>)}
                     </select>
                   </div>
-                  <div><div style={{fontSize:11,color:"#444",marginBottom:5}}>Role</div>
+                  <div><div style={{fontSize:11,color:T.muted,marginBottom:5}}>Role</div>
                     <div style={{display:"flex",gap:7}}>
                       {["Sales","Manager","Admin"].map(r=>(
-                        <button key={r} onClick={()=>setRf(p=>({...p,role:r}))} style={{flex:1,background:rf.role===r?"rgba(230,57,70,.15)":"rgba(255,255,255,.04)",color:rf.role===r?"#E63946":"#666",border:"1px solid",borderColor:rf.role===r?"rgba(230,57,70,.35)":"#252535",borderRadius:7,padding:"6px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans'"}}>{r}</button>
+                        <button key={r} onClick={()=>setRf(p=>({...p,role:r}))} style={{flex:1,background:rf.role===r?T.accent+"22":"rgba(128,128,128,.08)",color:rf.role===r?T.accent:T.muted,border:"1px solid",borderColor:rf.role===r?T.accent+"44":T.border,borderRadius:7,padding:"6px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans'"}}>{r}</button>
                       ))}
                     </div>
                   </div>
-                  <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>Temporary Password</div><input className="inp" type="password" placeholder="Min. 8 chars" value={rf.password} onChange={e=>setRf(p=>({...p,password:e.target.value}))}/></div>
-                  <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>Confirm Password</div><input className="inp" type="password" placeholder="Repeat" value={rf.confirm} onChange={e=>setRf(p=>({...p,confirm:e.target.value}))}/></div>
-                  <button className="btn-red" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8}} onClick={doRegister} disabled={rLoad}>
+                  <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Temp Password</div><input style={inp} type="password" placeholder="Min. 8 chars" value={rf.password} onChange={e=>setRf(p=>({...p,password:e.target.value}))}/></div>
+                  <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Confirm</div><input style={inp} type="password" placeholder="Repeat" value={rf.confirm} onChange={e=>setRf(p=>({...p,confirm:e.target.value}))}/></div>
+                  <button style={{...btnP,display:"flex",alignItems:"center",justifyContent:"center",gap:8}} onClick={doRegister} disabled={rLoad}>
                     {rLoad?<><span className="spin"></span>Creating…</>:"Create Account"}
                   </button>
                 </div>
@@ -793,90 +993,94 @@ function App(){
             </div>
           </div>
         )}
-      </div>
 
-      {/* ════ ADD CLIENT MODAL ════ */}
+      </div>{/* end content */}
+
+      {/* ═══ MODALS ═══ */}
+
+      {/* Add Client */}
       {addC&&(
-        <div className="overlay" onClick={()=>setAddC(false)}>
-          <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setAddC(false)}>
+          <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:18,padding:28,width:580,maxWidth:"100%",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
-              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:22,letterSpacing:2}}>ADD NEW CLIENT</h3>
-              <button style={{background:"none",border:"none",color:"#555",cursor:"pointer",fontSize:22}} onClick={()=>setAddC(false)}>×</button>
+              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:22,letterSpacing:2,color:T.text}}>ADD NEW CLIENT</h3>
+              <button style={{background:"none",border:"none",color:T.muted,cursor:"pointer",fontSize:22}} onClick={()=>setAddC(false)}>×</button>
             </div>
             <div style={{display:"grid",gap:12}}>
-              <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>Full Name *</div><input className="inp" placeholder="Full name" value={cf.name} onChange={e=>setCf(p=>({...p,name:e.target.value}))}/></div>
+              <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Full Name *</div><input style={inp} placeholder="Full name" value={cf.name} onChange={e=>setCf(p=>({...p,name:e.target.value}))}/></div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-                <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>Phone</div><input className="inp" placeholder="403-555-0000" value={cf.phone} onChange={e=>setCf(p=>({...p,phone:e.target.value}))}/></div>
-                <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>Email</div><input className="inp" type="email" placeholder="client@email.com" value={cf.email} onChange={e=>setCf(p=>({...p,email:e.target.value}))}/></div>
+                <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Phone</div><input style={inp} placeholder="403-555-0000" value={cf.phone} onChange={e=>setCf(p=>({...p,phone:e.target.value}))}/></div>
+                <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Email</div><input style={inp} type="email" placeholder="client@email.com" value={cf.email} onChange={e=>setCf(p=>({...p,email:e.target.value}))}/></div>
               </div>
-              <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>Location / Area</div><input className="inp" placeholder="e.g. Calgary NW" value={cf.location} onChange={e=>setCf(p=>({...p,location:e.target.value}))}/></div>
-              <div><div style={{fontSize:11,color:"#444",marginBottom:5}}>Status</div>
+              <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Location / Area</div><input style={inp} placeholder="e.g. Calgary NW" value={cf.location} onChange={e=>setCf(p=>({...p,location:e.target.value}))}/></div>
+              <div><div style={{fontSize:11,color:T.muted,marginBottom:5}}>Status</div>
                 <div style={{display:"flex",gap:8}}>
                   {["Hot","Warm","Cold"].map(s=>(
-                    <button key={s} onClick={()=>setCf(p=>({...p,status:s}))} style={{flex:1,background:cf.status===s?STATUS_C[s].bg:"rgba(255,255,255,.05)",color:cf.status===s?"#fff":"#777",border:"1px solid",borderColor:cf.status===s?STATUS_C[s].bg:"#252535",borderRadius:7,padding:"9px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans'"}}>{s}</button>
+                    <button key={s} onClick={()=>setCf(p=>({...p,status:s}))} style={{flex:1,background:cf.status===s?STATUS_C[s]:"rgba(128,128,128,.08)",color:cf.status===s?"#fff":T.muted,border:"1px solid",borderColor:cf.status===s?STATUS_C[s]:T.border,borderRadius:7,padding:"9px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans'"}}>{s}</button>
                   ))}
                 </div>
               </div>
-              <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>Interested In</div>
-                <select className="inp" value={cf.interested_in} onChange={e=>{const v=inv.find(x=>x.year+" "+x.make+" "+x.model===e.target.value);setCf(p=>({...p,interested_in:e.target.value,paired_vehicle_stock:v?.stock||""}));}}>
-                  <option value="">Select a vehicle from inventory…</option>
+              <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Interested In</div>
+                <select style={inp} value={cf.interested_in} onChange={e=>{const v=inv.find(x=>x.year+" "+x.make+" "+x.model===e.target.value);setCf(p=>({...p,interested_in:e.target.value,paired_vehicle_stock:v?.stock||""}));}}>
+                  <option value="">Select a vehicle…</option>
                   {inv.slice(0,150).map((v,i)=><option key={i} value={v.year+" "+v.make+" "+v.model}>{v.year} {v.make} {v.model} — {fmtCur(v.price)} · {v.location}</option>)}
                 </select>
               </div>
-              <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>Notes</div><textarea className="inp" placeholder="Financing status, preferences, follow-up notes…" value={cf.notes} onChange={e=>setCf(p=>({...p,notes:e.target.value}))}/></div>
-              <button className="btn-red" onClick={saveClient}>Save Client</button>
+              <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Notes</div><textarea style={{...inp,minHeight:80,resize:"vertical"}} placeholder="Financing, preferences, follow-up notes…" value={cf.notes} onChange={e=>setCf(p=>({...p,notes:e.target.value}))}/></div>
+              <button style={btnP} onClick={saveClient}>Save Client</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ════ EDIT CLIENT MODAL ════ */}
+      {/* Edit Client */}
       {editC&&(
-        <div className="overlay" onClick={()=>setEditC(false)}>
-          <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setEditC(false)}>
+          <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:18,padding:28,width:540,maxWidth:"100%",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
-              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:22,letterSpacing:2}}>EDIT CLIENT</h3>
-              <button style={{background:"none",border:"none",color:"#555",cursor:"pointer",fontSize:22}} onClick={()=>setEditC(false)}>×</button>
+              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:22,letterSpacing:2,color:T.text}}>EDIT CLIENT</h3>
+              <button style={{background:"none",border:"none",color:T.muted,cursor:"pointer",fontSize:22}} onClick={()=>setEditC(false)}>×</button>
             </div>
             <div style={{display:"grid",gap:12}}>
-              <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>Full Name *</div><input className="inp" value={cf.name} onChange={e=>setCf(p=>({...p,name:e.target.value}))}/></div>
+              <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Full Name *</div><input style={inp} value={cf.name} onChange={e=>setCf(p=>({...p,name:e.target.value}))}/></div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-                <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>Phone</div><input className="inp" value={cf.phone} onChange={e=>setCf(p=>({...p,phone:e.target.value}))}/></div>
-                <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>Email</div><input className="inp" type="email" value={cf.email} onChange={e=>setCf(p=>({...p,email:e.target.value}))}/></div>
+                <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Phone</div><input style={inp} value={cf.phone} onChange={e=>setCf(p=>({...p,phone:e.target.value}))}/></div>
+                <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Email</div><input style={inp} type="email" value={cf.email} onChange={e=>setCf(p=>({...p,email:e.target.value}))}/></div>
               </div>
-              <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>Location</div><input className="inp" value={cf.location} onChange={e=>setCf(p=>({...p,location:e.target.value}))}/></div>
-              <div><div style={{fontSize:11,color:"#444",marginBottom:5}}>Status</div>
+              <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Location</div><input style={inp} value={cf.location} onChange={e=>setCf(p=>({...p,location:e.target.value}))}/></div>
+              <div><div style={{fontSize:11,color:T.muted,marginBottom:5}}>Status</div>
                 <div style={{display:"flex",gap:8}}>
                   {["Hot","Warm","Cold"].map(s=>(
-                    <button key={s} onClick={()=>setCf(p=>({...p,status:s}))} style={{flex:1,background:cf.status===s?STATUS_C[s].bg:"rgba(255,255,255,.05)",color:cf.status===s?"#fff":"#777",border:"1px solid",borderColor:cf.status===s?STATUS_C[s].bg:"#252535",borderRadius:7,padding:"9px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans'"}}>{s}</button>
+                    <button key={s} onClick={()=>setCf(p=>({...p,status:s}))} style={{flex:1,background:cf.status===s?STATUS_C[s]:"rgba(128,128,128,.08)",color:cf.status===s?"#fff":T.muted,border:"1px solid",borderColor:cf.status===s?STATUS_C[s]:T.border,borderRadius:7,padding:"9px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans'"}}>{s}</button>
                   ))}
                 </div>
               </div>
-              <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>Notes</div><textarea className="inp" value={cf.notes} onChange={e=>setCf(p=>({...p,notes:e.target.value}))}/></div>
-              <button className="btn-red" onClick={updateClient}>Save Changes</button>
+              <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Notes</div><textarea style={{...inp,minHeight:80,resize:"vertical"}} value={cf.notes} onChange={e=>setCf(p=>({...p,notes:e.target.value}))}/></div>
+              <button style={btnP} onClick={updateClient}>Save Changes</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ════ PAIR VEHICLE MODAL ════ */}
+      {/* Pair Vehicle */}
       {pairModal&&(
-        <div className="overlay" onClick={()=>{setPairModal(null);setCSearch("");}}>
-          <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>{setPairModal(null);setVSearch("");}}>
+          <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:18,padding:28,width:580,maxWidth:"100%",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:20,letterSpacing:2}}>PAIR VEHICLE — {pairModal.name?.toUpperCase()}</h3>
-              <button style={{background:"none",border:"none",color:"#555",cursor:"pointer",fontSize:22}} onClick={()=>{setPairModal(null);setCSearch("");}}>×</button>
+              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:20,letterSpacing:2,color:T.text}}>PAIR VEHICLE — {pairModal.name?.toUpperCase()}</h3>
+              <button style={{background:"none",border:"none",color:T.muted,cursor:"pointer",fontSize:22}} onClick={()=>{setPairModal(null);setVSearch("");}}>×</button>
             </div>
-            <input className="inp" placeholder="🔍 Search by make, model, year, stock #, location…" value={cSearch} onChange={e=>setCSearch(e.target.value)} style={{marginBottom:12}} autoFocus/>
+            <input style={{...inp,marginBottom:12}} placeholder="🔍 Search make, model, year, stock, location…" value={vSearch} onChange={e=>setVSearch(e.target.value)} autoFocus/>
             <div style={{display:"grid",gap:8,maxHeight:420,overflowY:"auto"}}>
-              {searchedVehicles.map((v,i)=>(
-                <div key={i} onClick={()=>pairVehicle(pairModal,v)} style={{display:"flex",alignItems:"center",gap:12,background:pairModal.paired_vehicle_stock===v.stock?"rgba(230,57,70,.1)":"#0D0D14",border:"1px solid "+(pairModal.paired_vehicle_stock===v.stock?"#E63946":"#1a1a24"),borderRadius:10,padding:"11px 14px",cursor:"pointer",transition:"all .15s"}}>
+              {srchV.map((v,i)=>(
+                <div key={i} onClick={()=>pairVehicle(pairModal,v)} style={{display:"flex",alignItems:"center",gap:12,background:pairModal.paired_vehicle_stock===v.stock?T.accent+"22":T.bg,border:`1px solid ${pairModal.paired_vehicle_stock===v.stock?T.accent:T.border}`,borderRadius:10,padding:"11px 14px",cursor:"pointer",transition:"all .15s"}}>
                   <span style={{fontSize:22,flexShrink:0}}>{typeEmoji(v.type)}</span>
+                  {v.image&&<img src={v.image} alt="" style={{width:60,height:40,objectFit:"cover",borderRadius:5,flexShrink:0}} onError={e=>e.target.style.display="none"}/>}
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:13,fontWeight:600}}>{v.year} {v.make} {v.model}</div>
-                    <div style={{fontSize:11,color:"#555"}}>#{v.stock} · {v.location} · {v.mileage}</div>
+                    <div style={{fontSize:13,fontWeight:600,color:T.text}}>{v.year} {v.make} {v.model}</div>
+                    <div style={{fontSize:11,color:T.muted}}>#{v.stock} · {v.location} · {v.mileage}</div>
                   </div>
-                  <span style={{fontSize:14,fontWeight:700,color:"#E63946",flexShrink:0}}>{fmtCur(v.price)}</span>
+                  <span style={{fontSize:14,fontWeight:700,color:T.accent,flexShrink:0}}>{fmtCur(v.price)}</span>
                 </div>
               ))}
             </div>
@@ -884,55 +1088,112 @@ function App(){
         </div>
       )}
 
-      {/* ════ AD DRAFT MODAL ════ */}
+      {/* Ad Draft Modal */}
       {draftOpen&&(
-        <div className="overlay" onClick={()=>setDraftOpen(false)}>
-          <div className="modal" style={{width:660}} onClick={e=>e.stopPropagation()}>
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setDraftOpen(false)}>
+          <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:18,padding:28,width:760,maxWidth:"100%",maxHeight:"94vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
-              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:22,letterSpacing:2}}>📝 {editPost?"EDIT AD DRAFT":"NEW AD DRAFT"}</h3>
-              <button style={{background:"none",border:"none",color:"#555",cursor:"pointer",fontSize:22}} onClick={()=>setDraftOpen(false)}>×</button>
+              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:22,letterSpacing:2,color:T.text}}>📝 {editPost?"EDIT AD DRAFT":"NEW AD DRAFT"}</h3>
+              <button style={{background:"none",border:"none",color:T.muted,cursor:"pointer",fontSize:22}} onClick={()=>setDraftOpen(false)}>×</button>
             </div>
-
-            {/* Vehicle picker */}
-            <div style={{marginBottom:14}}>
-              <div style={{fontSize:11,color:"#444",marginBottom:6}}>Vehicle {draftV&&<span style={{color:"#E63946"}}>· {draftV.year} {draftV.make} {draftV.model}</span>}</div>
-              <input className="inp" placeholder="🔍 Search inventory to select a vehicle…" value={vSearch} onChange={e=>setVSearch(e.target.value)}/>
-              {vSearch&&(
-                <div style={{background:"#0D0D14",border:"1px solid #252535",borderRadius:9,maxHeight:200,overflowY:"auto",marginTop:6}}>
-                  {searchedVehicles.length===0&&<div style={{padding:14,color:"#555",fontSize:13}}>No vehicles match.</div>}
-                  {searchedVehicles.map((v,i)=>(
-                    <div key={i} onClick={()=>{setDraftV(v);setDraftTitle(v.year+" "+v.make+" "+v.model);setDraftText(buildDraftText(v));setVSearch("");}} style={{padding:"10px 14px",cursor:"pointer",borderBottom:"1px solid #14141e",fontSize:13,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                      <span>{typeEmoji(v.type)} <strong>{v.year} {v.make} {v.model}</strong></span>
-                      <span style={{color:"#555",fontSize:11}}>#{v.stock} · {fmtCur(v.price)} · {v.location}</span>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+              <div>
+                {/* Vehicle picker */}
+                <div style={{marginBottom:12}}>
+                  <div style={{fontSize:11,color:T.muted,marginBottom:6}}>Vehicle {draftV&&<span style={{color:T.accent}}>· {draftV.year} {draftV.make} {draftV.model}</span>}</div>
+                  <input style={inp} placeholder="🔍 Search inventory to auto-fill…" value={draftSearch} onChange={e=>setDraftSearch(e.target.value)}/>
+                  {draftSearch&&(
+                    <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:9,maxHeight:180,overflowY:"auto",marginTop:6}}>
+                      {srchV.length===0&&<div style={{padding:14,color:T.muted,fontSize:13}}>No matches.</div>}
+                      {srchV.map((v,i)=>(
+                        <div key={i} onClick={()=>{setDraftV(v);setDraftTitle(v.year+" "+v.make+" "+v.model);setDraftImg(v.image||"");setDraftText(buildAd(v,draftFeat,draftIntro));setDraftSearch("");}} style={{padding:"10px 14px",cursor:"pointer",borderBottom:`1px solid ${T.border}`,fontSize:13,display:"flex",gap:10,alignItems:"center"}}>
+                          {v.image&&<img src={v.image} alt="" style={{width:50,height:34,objectFit:"cover",borderRadius:4,flexShrink:0}} onError={e=>e.target.style.display="none"}/>}
+                          <div><div style={{color:T.text,fontWeight:600}}>{v.year} {v.make} {v.model}</div><div style={{color:T.muted,fontSize:11}}>#{v.stock} · {fmtCur(v.price)} · {v.location}</div></div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
-            </div>
-
-            <div style={{marginBottom:14}}>
-              <div style={{fontSize:11,color:"#444",marginBottom:5}}>Ad Title</div>
-              <input className="inp" placeholder="e.g. 2022 Ford F-150 XLT — House of Cars Airdrie" value={draftTitle} onChange={e=>setDraftTitle(e.target.value)}/>
-            </div>
-
-            <div style={{marginBottom:18}}>
-              <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
-                <div style={{fontSize:11,color:"#444"}}>Ad Text</div>
-                <span style={{fontSize:11,color:"#444"}}>{draftText.length} characters</span>
+                {draftImg&&<img src={draftImg} alt="" style={{width:"100%",height:130,objectFit:"cover",borderRadius:10,marginBottom:12}} onError={e=>e.target.style.display="none"}/>}
+                <div style={{marginBottom:10}}>
+                  <div style={{fontSize:11,color:T.muted,marginBottom:4}}>Vehicle Features (one per line)</div>
+                  <textarea style={{...inp,minHeight:110,fontSize:12,resize:"vertical"}} placeholder={"• All-Wheel Drive\n• Leather Interior\n• Heated Seats\n…"} value={draftFeat} onChange={e=>{setDraftFeat(e.target.value);if(draftV)setDraftText(buildAd(draftV,e.target.value,draftIntro));}}/>
+                </div>
+                <div style={{marginBottom:10}}>
+                  <div style={{fontSize:11,color:T.muted,marginBottom:4}}>Custom Opening (optional)</div>
+                  <textarea style={{...inp,minHeight:70,fontSize:12,resize:"vertical"}} placeholder="Looking for a great SUV without breaking the bank?…" value={draftIntro} onChange={e=>{setDraftIntro(e.target.value);if(draftV)setDraftText(buildAd(draftV,draftFeat,e.target.value));}}/>
+                </div>
+                <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Ad Title</div>
+                  <input style={inp} placeholder="2022 Ford F-150 XLT — HOC Airdrie" value={draftTitle} onChange={e=>setDraftTitle(e.target.value)}/>
+                </div>
               </div>
-              <textarea className="inp" style={{minHeight:240,fontSize:13,lineHeight:1.75}} value={draftText} onChange={e=>setDraftText(e.target.value)} placeholder="Write your ad here. Select a vehicle above to auto-generate a template."/>
+              <div style={{display:"flex",flexDirection:"column"}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+                  <div style={{fontSize:11,color:T.muted}}>Ad Text (HOC Template)</div>
+                  <span style={{fontSize:11,color:T.muted}}>{draftText.length} chars</span>
+                </div>
+                <textarea style={{...inp,flex:1,minHeight:430,fontSize:12,lineHeight:1.75,resize:"none"}} value={draftText} onChange={e=>setDraftText(e.target.value)} placeholder="Select a vehicle to auto-generate the HOC template."/>
+              </div>
             </div>
-
-            <div className="notice info" style={{marginBottom:16,fontSize:12}}>
-              📋 Clicking <strong>"Copy & Open Marketplace"</strong> copies your ad to clipboard and opens Facebook Marketplace in a new tab. Paste and fill in vehicle details to post.
+            <div style={{...nInfo,marginTop:14,fontSize:12}}>
+              📋 <strong>"Copy & Open Marketplace"</strong> copies your ad to clipboard and opens Facebook Marketplace. Paste and fill in vehicle details to publish.
             </div>
+            <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:14}}>
+              <button style={{flex:2,background:"#34C759",color:"#fff",border:"none",borderRadius:9,padding:"11px 18px",fontFamily:"'DM Sans'",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}} onClick={openMarketplace}>📋 Copy & Open Facebook Marketplace</button>
+              <button style={{...btnS,flex:1}} onClick={()=>saveDraft("Draft")}>💾 Save Draft</button>
+              <button style={btnS} onClick={()=>setDraftOpen(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
 
-            <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-              <button className="btn-green" style={{flex:2,display:"flex",alignItems:"center",justifyContent:"center",gap:8}} onClick={openMarketplace}>
-                📋 Copy & Open Facebook Marketplace
-              </button>
-              <button className="btn-sm" style={{flex:1}} onClick={()=>saveDraft("Draft")}>💾 Save Draft</button>
-              <button className="btn-sm" onClick={()=>setDraftOpen(false)}>Cancel</button>
+      {/* Reset Password */}
+      {resetTarget&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setResetTarget(null)}>
+          <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:18,padding:28,width:400,maxWidth:"100%"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:20,letterSpacing:2,color:T.text}}>RESET PASSWORD</h3>
+              <button style={{background:"none",border:"none",color:T.muted,cursor:"pointer",fontSize:22}} onClick={()=>setResetTarget(null)}>×</button>
+            </div>
+            <p style={{fontSize:13,color:T.muted,marginBottom:16,lineHeight:1.6}}>Set a new password for <strong style={{color:T.text}}>{resetTarget.first_name} {resetTarget.last_name}</strong>. Communicate it to them directly.</p>
+            {resetMsg&&<div style={resetMsg.startsWith("✅")?nOk:nErr}>{resetMsg}</div>}
+            <div style={{display:"grid",gap:12}}>
+              <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>New Password</div><input style={inp} type="password" placeholder="Min. 8 chars" value={resetPw} onChange={e=>{setResetPw(e.target.value);setResetMsg("");}}/></div>
+              <button style={btnP} onClick={doResetPw}>Set New Password</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings */}
+      {settingsOpen&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setSettingsOpen(false)}>
+          <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:18,padding:28,width:500,maxWidth:"100%"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:22,letterSpacing:2,color:T.text}}>⚙️ SETTINGS</h3>
+              <button style={{background:"none",border:"none",color:T.muted,cursor:"pointer",fontSize:22}} onClick={()=>setSettingsOpen(false)}>×</button>
+            </div>
+            <div style={{fontSize:11,color:T.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>Colour Theme</div>
+            <p style={{fontSize:12,color:T.muted,marginBottom:16}}>Your theme saves to your account and works on any device.</p>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:22}}>
+              {Object.entries(THEMES).map(([key,t])=>(
+                <button key={key} onClick={()=>saveTheme(key)} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:themeKey===key?t.accent+"22":T.bg,border:`2px solid ${themeKey===key?t.accent:T.border}`,borderRadius:10,cursor:"pointer",fontFamily:"'DM Sans'",textAlign:"left",transition:"all .2s"}}>
+                  <div style={{width:28,height:28,borderRadius:6,background:t.bg,border:`2px solid ${t.accent}`,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <div style={{width:12,height:12,borderRadius:"50%",background:t.accent}}></div>
+                  </div>
+                  <div>
+                    <div style={{fontSize:13,fontWeight:600,color:T.text}}>{t.name}</div>
+                    <div style={{fontSize:10,color:T.muted}}>{t.accent}</div>
+                  </div>
+                  {themeKey===key&&<span style={{marginLeft:"auto",color:t.accent,fontSize:18}}>✓</span>}
+                </button>
+              ))}
+            </div>
+            <div style={{borderTop:`1px solid ${T.border}`,paddingTop:16}}>
+              <div style={{fontSize:11,color:T.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>Your Account</div>
+              <div style={{fontSize:14,fontWeight:600,color:T.text,marginBottom:4}}>{user?.first_name} {user?.last_name}</div>
+              <div style={{fontSize:12,color:T.muted,marginBottom:4}}>{user?.email}</div>
+              <div style={{fontSize:12,color:T.muted}}>{user?.role} · {user?.location}</div>
             </div>
           </div>
         </div>
