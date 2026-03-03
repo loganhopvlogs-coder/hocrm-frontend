@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>House of Cars — CRM</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0A0A0F;font-family:'DM Sans',sans-serif}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:#111}
+::-webkit-scrollbar-thumb{background:#2a2a38;border-radius:2px}
+.tab-btn{background:none;border:none;color:#555;cursor:pointer;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;border-radius:8px;transition:all .2s;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.tab-btn:hover{color:#ccc;background:rgba(255,255,255,.05)}
+.tab-btn.active{color:#fff;background:rgba(255,255,255,.1)}
+.card{background:#13131A;border:1px solid #1E1E2A;border-radius:14px;padding:20px}
+.btn-red{background:#E63946;color:#fff;border:none;border-radius:9px;padding:10px 18px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-red:hover{background:#c8303c;transform:translateY(-1px)}
+.btn-red:disabled{opacity:.5;cursor:default;transform:none}
+.btn-sm{background:rgba(255,255,255,.07);color:#bbb;border:1px solid #2a2a38;border-radius:7px;padding:7px 13px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .18s}
+.btn-sm:hover{background:rgba(255,255,255,.12);color:#fff}
+.inp{background:#16161f;border:1px solid #252535;border-radius:9px;color:#e8e8f0;padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:13px;width:100%;outline:none;transition:border .2s}
+.inp:focus{border-color:#E63946}
+.inp::placeholder{color:#444}
+select.inp{cursor:pointer}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:#13131A;border:1px solid #252535;border-radius:18px;padding:28px;width:540px;max-width:100%;max-height:88vh;overflow-y:auto}
+.lead-row{display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;transition:background .15s;border-bottom:1px solid #14141e}
+.lead-row:hover{background:rgba(255,255,255,.03)}
+.lead-row.sel{background:rgba(230,57,70,.09);border-left:3px solid #E63946}
+.auth-bg{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 20% 50%,rgba(230,57,70,.15) 0%,transparent 60%),#0A0A0F;padding:24px}
+.auth-box{background:#111118;border:1px solid #1E1E2A;border-radius:22px;padding:40px 36px;width:420px;max-width:100%}
+.tag{display:inline-block;padding:2px 9px;border-radius:6px;font-size:11px;font-weight:700;background:rgba(230,57,70,.14);color:#E63946;border:1px solid rgba(230,57,70,.28)}
+.skeleton{background:linear-gradient(90deg,#1a1a24 25%,#222230 50%,#1a1a24 75%);background-size:1000px 100%;animation:shimmer 1.5s infinite;border-radius:6px;height:14px}
+th{text-align:left;padding:10px 14px;font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.7px;border-bottom:1px solid #1E1E2A;cursor:pointer;user-select:none;white-space:nowrap}
+th:hover{color:#aaa}
+td{padding:10px 14px;font-size:13px;border-bottom:1px solid #12121c;vertical-align:middle}
+tr:hover td{background:rgba(255,255,255,.018)}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shimmer{0%{background-position:-1000px 0}100%{background-position:1000px 0}}
+.spin{width:15px;height:15px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .65s linear infinite;display:inline-block;flex-shrink:0}
+.fu{animation:fadeUp .3s ease both}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useMemo, useEffect } = React;
+
+const BACKEND_URL   = "https://hocrm-backend.onrender.com";
+const INVENTORY_URL = BACKEND_URL + "/inventory";
+const ALLOWED_DOMAINS = ["houseofcarscalgary.com","houseofcars.com"];
+
+const HOC_LOCATIONS = [
+  { id:"52st",      name:"52 Street",       city:"Calgary",      region:"Calgary & Area",   phone:"(403) 250-5858" },
+  { id:"airdrie",   name:"Airdrie",          city:"Airdrie",      region:"Calgary & Area",   phone:"(403) 960-0040" },
+  { id:"barlow",    name:"Barlow Trail",     city:"Calgary",      region:"Calgary & Area",   phone:"(587) 352-7307" },
+  { id:"chinook",   name:"Chinook",          city:"Calgary",      region:"Calgary & Area",   phone:"(403) 454-5794" },
+  { id:"cochrane",  name:"Cochrane",         city:"Cochrane",     region:"Calgary & Area",   phone:"(587) 441-3612" },
+  { id:"deerfoot",  name:"Deerfoot Meadows", city:"Calgary",      region:"Calgary & Area",   phone:"(587) 355-4187" },
+  { id:"macleod",   name:"MacLeod Trail",    city:"Calgary",      region:"Calgary & Area",   phone:"(403) 457-2244" },
+  { id:"mcknight",  name:"McKnight Blvd",    city:"Calgary",      region:"Calgary & Area",   phone:"(403) 277-9511" },
+  { id:"olympic",   name:"Olympic Park",     city:"Calgary",      region:"Calgary & Area",   phone:"(587) 356-1144" },
+  { id:"edmonton",  name:"Edmonton",         city:"Edmonton",     region:"Northern Alberta", phone:"(780) 328-4704" },
+  { id:"lethbridge",name:"Lethbridge",       city:"Lethbridge",   region:"Southern Alberta", phone:"(403) 524-0526" },
+  { id:"medhat",    name:"Medicine Hat",     city:"Medicine Hat", region:"Southern Alberta", phone:"(587) 289-0981" },
+];
+
+const SEED_LEADS = [
+  { id:1, name:"Jordan Mackenzie", phone:"403-555-0192", email:"jordan.m@email.com", status:"Hot",  lastContact:"2h ago",  interestedIn:"TBD", location:"Calgary NE", notes:"Ready to buy this week, financing pre-approved" },
+  { id:2, name:"Priya Sharma",     phone:"403-555-0347", email:"priya.s@email.com",  status:"Warm", lastContact:"1d ago",  interestedIn:"TBD", location:"Calgary SW", notes:"Comparing options" },
+  { id:3, name:"Maria Gonzalez",   phone:"587-555-0234", email:"maria.g@email.com",  status:"Hot",  lastContact:"30m ago", interestedIn:"TBD", location:"Calgary NW", notes:"Test drive scheduled Saturday" },
+];
+
+const SEED_ACCOUNTS = [
+  { id:1, name:"Alex Rivera", email:"alex.rivera@houseofcars.com",      location:"52 Street", role:"Admin",   status:"Active", joined:"Jan 2024" },
+  { id:2, name:"Dana Chen",   email:"dana.chen@houseofcarscalgary.com", location:"Airdrie",   role:"Manager", status:"Active", joined:"Mar 2023" },
+];
+
+const STATUS_C = { Hot:{bg:"#E63946",text:"#fff"}, Warm:{bg:"#FF9500",text:"#fff"}, Cold:{bg:"#555",text:"#fff"} };
+const typeEmoji = t => ({Truck:"🛻",SUV:"🚙",Sedan:"🚗",Van:"🚐"}[t] || "🚗");
+const fmtCur = n => n ? "$" + Number(n).toLocaleString() : "—";
+
+function normalizeVehicle(v, i) {
+  return {
+    id: i+1, stock: v.stock || ("HOC-"+i), vin: v.vin||"",
+    year: v.year||0, make: v.make||"", model: v.model||"",
+    title: v.title || ((v.year||"")+" "+(v.make||"")+" "+(v.model||"")),
+    price: v.price||0, mileage: v.mileage||"", location: v.location||"",
+    type: v.bodyType||v.type||"", color: v.color||"",
+    image: v.image||"", listingUrl: v.listingUrl||v.url||"", condition: v.condition||"Used",
+  };
+}
+
+function App() {
+  const [screen, setScreen] = useState("login");
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loginForm, setLoginForm] = useState({email:"",password:""});
+  const [signupForm, setSignupForm] = useState({firstName:"",lastName:"",email:"",location:"",role:"Sales",password:"",confirm:""});
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [authErr, setAuthErr] = useState("");
+  const [authMsg, setAuthMsg] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [showPw, setShowPw] = useState(false);
+  const [remember, setRemember] = useState(false);
+  const [accounts, setAccounts] = useState(SEED_ACCOUNTS);
+  const [tab, setTab] = useState("dashboard");
+  const [inventory, setInventory] = useState([]);
+  const [invLoading, setInvLoading] = useState(false);
+  const [invError, setInvError] = useState("");
+  const [lastSynced, setLastSynced] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState({text:"",type:""});
+  const [invFilter, setInvFilter] = useState("All");
+  const [invLoc, setInvLoc] = useState("All");
+  const [invSort, setInvSort] = useState({col:"year",dir:"desc"});
+  const [leads, setLeads] = useState(SEED_LEADS);
+  const [selectedLead, setSelectedLead] = useState(null);
+  const [paired, setPaired] = useState({});
+  const [pairModal, setPairModal] = useState(null);
+  const [addClientOpen, setAddClientOpen] = useState(false);
+  const [newClient, setNewClient] = useState({name:"",phone:"",email:"",status:"Warm",location:"",notes:"",interestedIn:""});
+  const [fbLinked, setFbLinked] = useState(false);
+  const [fbMini, setFbMini] = useState(null);
+  const [fbDraft, setFbDraft] = useState("");
+  const [fbPosted, setFbPosted] = useState([]);
+  const [regForm, setRegForm] = useState({firstName:"",lastName:"",email:"",location:"",role:"Sales",password:"",confirm:""});
+  const [regErr, setRegErr] = useState("");
+  const [regOk, setRegOk] = useState(false);
+  const [regLoading, setRegLoading] = useState(false);
+
+  const loadInventory = async (force=false) => {
+    if (force) { setSyncing(true); setSyncMsg({text:"",type:""}); }
+    else { setInvLoading(true); setInvError(""); }
+    try {
+      const res  = await fetch(INVENTORY_URL);
+      if (!res.ok) throw new Error("API error "+res.status);
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || "Backend error");
+      const data = json.vehicles;
+      if (!Array.isArray(data)||data.length===0) throw new Error("No vehicles found — re-run your Apify scraper.");
+      const normalized = data.map(normalizeVehicle);
+      setInventory(normalized);
+      setLastSynced(new Date().toLocaleTimeString("en-CA",{hour:"2-digit",minute:"2-digit"}));
+      if (force) setSyncMsg({text:"✅ Synced! "+normalized.length+" vehicles loaded from houseofcars.com",type:"success"});
+    } catch(err) {
+      if (force) setSyncMsg({text:"❌ "+err.message,type:"error"});
+      else setInvError(err.message);
+    } finally {
+      setInvLoading(false); setSyncing(false);
+      if (force) setTimeout(()=>setSyncMsg({text:"",type:""}),5000);
+    }
+  };
+
+  useEffect(()=>{ if(screen==="app") loadInventory(); },[screen]);
+
+  const doLogin = () => {
+    setAuthErr(""); setAuthLoading(true);
+    setTimeout(()=>{
+      const acc = accounts.find(a=>a.email.toLowerCase()===loginForm.email.toLowerCase());
+      if (!acc) { setAuthErr("No account found with that email."); setAuthLoading(false); return; }
+      if (!loginForm.password) { setAuthErr("Please enter your password."); setAuthLoading(false); return; }
+      setCurrentUser(acc); setScreen("app"); setAuthLoading(false);
+    },900);
+  };
+
+  const doSignup = () => {
+    setAuthErr("");
+    const {firstName,lastName,email,password,confirm,location} = signupForm;
+    if (!firstName||!lastName||!email||!password||!location) { setAuthErr("Please fill in all required fields."); return; }
+    const domain = email.split("@")[1]?.toLowerCase();
+    if (!ALLOWED_DOMAINS.includes(domain)) { setAuthErr("Sorry, please contact your administrator for assistance making your HOCRM account."); return; }
+    if (password.length<8) { setAuthErr("Password must be at least 8 characters."); return; }
+    if (password!==confirm) { setAuthErr("Passwords do not match."); return; }
+    if (accounts.find(a=>a.email.toLowerCase()===email.toLowerCase())) { setAuthErr("An account with this email already exists."); return; }
+    setAuthLoading(true);
+    setTimeout(()=>{
+      const newAcc={id:Date.now(),name:firstName+" "+lastName,email,location,role:signupForm.role,status:"Active",joined:new Date().toLocaleDateString("en-CA",{month:"short",year:"numeric"})};
+      setAccounts(p=>[...p,newAcc]); setCurrentUser(newAcc); setScreen("app"); setAuthLoading(false);
+    },1000);
+  };
+
+  const doForgot = () => {
+    setAuthErr(""); setAuthMsg("");
+    if (!forgotEmail) { setAuthErr("Please enter your email."); return; }
+    const domain = forgotEmail.split("@")[1]?.toLowerCase();
+    if (!ALLOWED_DOMAINS.includes(domain)) { setAuthErr("Sorry, please contact your administrator for assistance making your HOCRM account."); return; }
+    setAuthLoading(true);
+    setTimeout(()=>{ setAuthMsg("If an account exists for "+forgotEmail+", a reset link has been sent."); setAuthLoading(false); },900);
+  };
+
+  const doRegister = () => {
+    setRegErr(""); setRegOk(false);
+    const {firstName,lastName,email,password,confirm,location} = regForm;
+    if (!firstName||!lastName||!email||!password||!location) { setRegErr("Please fill in all required fields."); return; }
+    const domain = email.split("@")[1]?.toLowerCase();
+    if (!ALLOWED_DOMAINS.includes(domain)) { setRegErr("Sorry, please contact your administrator for assistance making your HOCRM account."); return; }
+    if (password.length<8) { setRegErr("Password must be at least 8 characters."); return; }
+    if (password!==confirm) { setRegErr("Passwords do not match."); return; }
+    if (accounts.find(a=>a.email.toLowerCase()===email.toLowerCase())) { setRegErr("An account with this email already exists."); return; }
+    setRegLoading(true);
+    setTimeout(()=>{
+      setAccounts(p=>[...p,{id:Date.now(),name:firstName+" "+lastName,email,location,role:regForm.role,status:"Active",joined:new Date().toLocaleDateString("en-CA",{month:"short",year:"numeric"})}]);
+      setRegOk(true); setRegLoading(false);
+      setRegForm({firstName:"",lastName:"",email:"",location:"",role:"Sales",password:"",confirm:""});
+    },1000);
+  };
+
+  const invTypes = ["All",...Array.from(new Set(inventory.map(v=>v.type).filter(Boolean))).sort()];
+  const invLocs  = ["All",...Array.from(new Set(inventory.map(v=>v.location).filter(Boolean))).sort()];
+
+  const filteredInv = useMemo(()=>{
+    let d=[...inventory];
+    if(invFilter!=="All") d=d.filter(v=>v.type===invFilter);
+    if(invLoc!=="All")    d=d.filter(v=>v.location===invLoc);
+    d.sort((a,b)=>{ let av=a[invSort.col],bv=b[invSort.col]; if(typeof av==="string"){av=av.toLowerCase();bv=bv.toLowerCase();} return invSort.dir==="asc"?(av>bv?1:-1):(av<bv?1:-1); });
+    return d;
+  },[inventory,invFilter,invLoc,invSort]);
+
+  const toggleSort = col => setInvSort(s=>({col,dir:s.col===col&&s.dir==="asc"?"desc":"asc"}));
+  const arr = col => invSort.col===col?(invSort.dir==="asc"?" ↑":" ↓"):" ↕";
+
+  const openFbPost = v => {
+    setFbMini(v);
+    setFbDraft("🚗 Just Arrived at House of Cars – "+v.location+"!\n\n"+v.year+" "+v.make+" "+v.model+" — only "+v.mileage+"!\n\nPriced at "+fmtCur(v.price)+" | Stock #"+v.stock+"\n\n📍 House of Cars – "+v.location+"\nCall or DM to book your test drive! 🔥\n\n#HouseOfCars #"+(v.make||"").replace(/\s/g,"")+" #UsedCars #Alberta");
+  };
+
+  if (screen!=="app") return (
+    <div style={{fontFamily:"'DM Sans',sans-serif",color:"#E8E8F0"}}>
+      <div className="auth-bg">
+        <div className="auth-box fu">
+          <div style={{textAlign:"center",marginBottom:28}}>
+            <div style={{width:52,height:52,background:"#E63946",borderRadius:14,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:26,marginBottom:10}}>🚗</div>
+            <div style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:3}}>HOUSE OF CARS</div>
+            <div style={{fontSize:11,color:"#E63946",fontWeight:700,letterSpacing:2,marginTop:2}}>CRM COMPANION</div>
+          </div>
+          {authErr&&<div style={{background:"rgba(230,57,70,.12)",border:"1px solid rgba(230,57,70,.35)",borderRadius:10,padding:"11px 14px",marginBottom:16,fontSize:13,color:"#E63946",lineHeight:1.5}} className="fu">⚠️ {authErr}</div>}
+          {authMsg&&<div style={{background:"rgba(52,199,89,.12)",border:"1px solid rgba(52,199,89,.3)",borderRadius:10,padding:"11px 14px",marginBottom:16,fontSize:13,color:"#34C759"}} className="fu">✅ {authMsg}</div>}
+
+          {screen==="login"&&<>
+            <div style={{fontSize:20,fontWeight:700,marginBottom:18}}>Welcome back</div>
+            <div style={{display:"grid",gap:12}}>
+              <div><div style={{fontSize:11,color:"#555",marginBottom:5}}>Work Email</div><input className="inp" placeholder="name@houseofcars.com" value={loginForm.email} onChange={e=>{setLoginForm(p=>({...p,email:e.target.value}));setAuthErr("");}} onKeyDown={e=>e.key==="Enter"&&doLogin()}/></div>
+              <div><div style={{fontSize:11,color:"#555",marginBottom:5}}>Password</div>
+                <div style={{position:"relative"}}>
+                  <input className="inp" type={showPw?"text":"password"} placeholder="••••••••" value={loginForm.password} onChange={e=>{setLoginForm(p=>({...p,password:e.target.value}));setAuthErr("");}} onKeyDown={e=>e.key==="Enter"&&doLogin()} style={{paddingRight:42}}/>
+                  <button onClick={()=>setShowPw(s=>!s)} style={{position:"absolute",right:11,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"#555",cursor:"pointer",fontSize:14}}>{showPw?"🙈":"👁️"}</button>
+                </div>
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",fontSize:13,color:"#777"}}>
+                  <input type="checkbox" checked={remember} onChange={e=>setRemember(e.target.checked)} style={{accentColor:"#E63946"}}/>Remember for 30 days
+                </label>
+                <button onClick={()=>{setScreen("forgot");setAuthErr("");setAuthMsg("");}} style={{background:"none",border:"none",color:"#E63946",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans'"}}>Forgot password?</button>
+              </div>
+              <button className="btn-red" onClick={doLogin} disabled={authLoading} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                {authLoading?<><span className="spin"></span>Signing in…</>:"Sign In"}
+              </button>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:12,margin:"18px 0",color:"#333",fontSize:12}}><div style={{flex:1,height:1,background:"#1E1E2A"}}></div>or<div style={{flex:1,height:1,background:"#1E1E2A"}}></div></div>
+            <button onClick={()=>{setScreen("signup");setAuthErr("");}} style={{width:"100%",background:"none",border:"1px solid #252535",borderRadius:9,padding:"10px",color:"#aaa",fontSize:13,cursor:"pointer",fontFamily:"'DM Sans'"}}>Create a new account</button>
+            <p style={{textAlign:"center",fontSize:11,color:"#2a2a38",marginTop:14}}>House of Cars staff only</p>
+          </>}
+
+          {screen==="signup"&&<>
+            <div style={{fontSize:20,fontWeight:700,marginBottom:4}}>Create your account</div>
+            <p style={{fontSize:12,color:"#555",marginBottom:18}}>@houseofcars.com and @houseofcarscalgary.com only.</p>
+            <div style={{display:"grid",gap:11}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>First Name *</div><input className="inp" placeholder="First" value={signupForm.firstName} onChange={e=>{setSignupForm(p=>({...p,firstName:e.target.value}));setAuthErr("");}}/></div>
+                <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Last Name *</div><input className="inp" placeholder="Last" value={signupForm.lastName} onChange={e=>{setSignupForm(p=>({...p,lastName:e.target.value}));setAuthErr("");}}/></div>
+              </div>
+              <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Work Email *</div><input className="inp" placeholder="name@houseofcars.com" value={signupForm.email} onChange={e=>{setSignupForm(p=>({...p,email:e.target.value}));setAuthErr("");}}/></div>
+              <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Location *</div>
+                <select className="inp" value={signupForm.location} onChange={e=>setSignupForm(p=>({...p,location:e.target.value}))}>
+                  <option value="">Select location…</option>
+                  {HOC_LOCATIONS.map(l=><option key={l.id} value={l.name}>{l.name} — {l.city}</option>)}
+                </select>
+              </div>
+              <div><div style={{fontSize:11,color:"#555",marginBottom:5}}>Role</div>
+                <div style={{display:"flex",gap:7}}>
+                  {["Sales","Manager","Admin"].map(r=>(
+                    <button key={r} onClick={()=>setSignupForm(p=>({...p,role:r}))} style={{flex:1,background:signupForm.role===r?"rgba(230,57,70,.18)":"rgba(255,255,255,.04)",color:signupForm.role===r?"#E63946":"#777",border:"1px solid",borderColor:signupForm.role===r?"rgba(230,57,70,.4)":"#252535",borderRadius:7,padding:"7px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans'"}}>{r}</button>
+                  ))}
+                </div>
+              </div>
+              <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Password *</div>
+                <div style={{position:"relative"}}>
+                  <input className="inp" type={showPw?"text":"password"} placeholder="Min. 8 chars" value={signupForm.password} onChange={e=>setSignupForm(p=>({...p,password:e.target.value}))} style={{paddingRight:42}}/>
+                  <button onClick={()=>setShowPw(s=>!s)} style={{position:"absolute",right:11,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"#555",cursor:"pointer",fontSize:14}}>{showPw?"🙈":"👁️"}</button>
+                </div>
+              </div>
+              <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Confirm Password *</div><input className="inp" type={showPw?"text":"password"} placeholder="Repeat" value={signupForm.confirm} onChange={e=>setSignupForm(p=>({...p,confirm:e.target.value}))}/></div>
+              <button className="btn-red" onClick={doSignup} disabled={authLoading} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                {authLoading?<><span className="spin"></span>Creating…</>:"Create Account"}
+              </button>
+            </div>
+            <button onClick={()=>{setScreen("login");setAuthErr("");}} style={{width:"100%",background:"none",border:"none",color:"#555",fontSize:13,cursor:"pointer",marginTop:14,fontFamily:"'DM Sans'"}}>← Back to Sign In</button>
+          </>}
+
+          {screen==="forgot"&&<>
+            <div style={{fontSize:20,fontWeight:700,marginBottom:6}}>Reset your password</div>
+            <p style={{fontSize:13,color:"#555",marginBottom:20,lineHeight:1.5}}>Enter your work email and we'll send a reset link.</p>
+            <div style={{display:"grid",gap:12}}>
+              <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Work Email</div><input className="inp" placeholder="name@houseofcars.com" value={forgotEmail} onChange={e=>{setForgotEmail(e.target.value);setAuthErr("");setAuthMsg("");}} onKeyDown={e=>e.key==="Enter"&&doForgot()}/></div>
+              <button className="btn-red" onClick={doForgot} disabled={authLoading} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                {authLoading?<><span className="spin"></span>Sending…</>:"Send Reset Link"}
+              </button>
+            </div>
+            <button onClick={()=>{setScreen("login");setAuthErr("");setAuthMsg("");}} style={{width:"100%",background:"none",border:"none",color:"#555",fontSize:13,cursor:"pointer",marginTop:14,fontFamily:"'DM Sans'"}}>← Back to Sign In</button>
+          </>}
+        </div>
+      </div>
+    </div>
+  );
+
+  const TABS=[{id:"dashboard",label:"Dashboard",icon:"⬛"},{id:"clients",label:"Clients",icon:"👥"},{id:"inventory",label:"Inventory",icon:"🚗"},{id:"social",label:"Social",icon:"📱"},{id:"accounts",label:"Accounts",icon:"🔐"}];
+
+  return (
+    <div style={{fontFamily:"'DM Sans',sans-serif",background:"#0A0A0F",minHeight:"100vh",color:"#E8E8F0",display:"flex",flexDirection:"column"}}>
+      <div style={{background:"#0D0D14",borderBottom:"1px solid #1E1E2A",padding:"0 20px",display:"flex",alignItems:"center",justifyContent:"space-between",height:56,flexShrink:0}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{background:"#E63946",width:30,height:30,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15}}>🚗</div>
+          <span style={{fontFamily:"'Bebas Neue'",fontSize:20,letterSpacing:2}}>HOUSE OF CARS</span>
+          <span style={{color:"#E63946",fontSize:10,fontWeight:700,background:"rgba(230,57,70,.14)",padding:"2px 8px",borderRadius:4,border:"1px solid rgba(230,57,70,.3)",marginLeft:2}}>CRM COMPANION</span>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          {lastSynced&&<span style={{fontSize:11,color:"#444"}}>Synced {lastSynced}</span>}
+          {invLoading&&<span style={{fontSize:11,color:"#FF9500",display:"flex",alignItems:"center",gap:6}}><span className="spin" style={{width:11,height:11,borderTopColor:"#FF9500"}}></span>Loading…</span>}
+          <span style={{fontSize:12,color:"#555"}}>{currentUser?.name}</span>
+          <div style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#E63946,#a02030)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700}}>
+            {currentUser?.name?.split(" ").map(n=>n[0]).join("")}
+          </div>
+          <button className="btn-sm" style={{fontSize:11}} onClick={()=>{setScreen("login");setCurrentUser(null);setInventory([]);}}>Sign Out</button>
+        </div>
+      </div>
+
+      <div style={{background:"#0D0D14",borderBottom:"1px solid #1E1E2A",padding:"0 14px",display:"flex",gap:2,flexShrink:0,overflowX:"auto"}}>
+        {TABS.map(t=>(
+          <button key={t.id} className={"tab-btn"+(tab===t.id?" active":"")} onClick={()=>setTab(t.id)}>{t.icon} {t.label}
+            {t.id==="inventory"&&inventory.length>0&&<span style={{background:"rgba(230,57,70,.2)",color:"#E63946",fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:10,marginLeft:2}}>{inventory.length}</span>}
+          </button>
+        ))}
+      </div>
+
+      <div style={{flex:1,overflowY:"auto",padding:20}}>
+
+        {tab==="dashboard"&&(
+          <div className="fu">
+            <h1 style={{fontFamily:"'Bebas Neue'",fontSize:28,letterSpacing:2,marginBottom:3}}>GOOD MORNING, {currentUser?.name?.split(" ")[0]?.toUpperCase()}</h1>
+            <p style={{fontSize:12,color:"#444",marginBottom:20}}>Here's what's happening across House of Cars today.</p>
+            {invLoading&&<div style={{background:"rgba(255,149,0,.08)",border:"1px solid rgba(255,149,0,.25)",borderRadius:12,padding:"14px 18px",marginBottom:18,display:"flex",alignItems:"center",gap:12,fontSize:13,color:"#FF9500"}}><span className="spin" style={{borderTopColor:"#FF9500",borderColor:"rgba(255,149,0,.3)"}}></span>Loading live inventory from houseofcars.com…</div>}
+            {invError&&<div style={{background:"rgba(230,57,70,.08)",border:"1px solid rgba(230,57,70,.25)",borderRadius:12,padding:"14px 18px",marginBottom:18,fontSize:13,color:"#E63946"}}>⚠️ {invError} <button className="btn-sm" style={{marginLeft:12,fontSize:11}} onClick={()=>loadInventory()}>Retry</button></div>}
+            <div style={{display:"flex",gap:14,marginBottom:20,flexWrap:"wrap"}}>
+              {[{label:"Clients",value:leads.length,color:"#E63946"},{label:"Hot Leads",value:leads.filter(l=>l.status==="Hot").length,color:"#FF3B30"},{label:"Inventory",value:invLoading?"…":inventory.length,color:"#0A84FF"},{label:"Locations",value:HOC_LOCATIONS.length,color:"#34C759"}].map(s=>(
+                <div key={s.label} className="card" style={{minWidth:110,flex:1}}>
+                  <div style={{fontSize:28,fontFamily:"'Bebas Neue'",color:s.color}}>{s.value}</div>
+                  <div style={{fontSize:12,fontWeight:600,color:"#bbb"}}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+              <div className="card">
+                <div style={{fontSize:11,fontWeight:700,color:"#E63946",marginBottom:12,letterSpacing:1,textTransform:"uppercase"}}>🔥 Hot Clients</div>
+                {leads.filter(l=>l.status==="Hot").map(l=>(
+                  <div key={l.id} style={{display:"flex",justifyContent:"space-between",padding:"9px 0",borderBottom:"1px solid #14141e"}}>
+                    <div><div style={{fontSize:13,fontWeight:600}}>{l.name}</div><div style={{fontSize:11,color:"#444"}}>{l.interestedIn}</div></div>
+                    <span style={{fontSize:11,color:"#333"}}>{l.lastContact}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="card">
+                <div style={{fontSize:11,fontWeight:700,color:"#0A84FF",marginBottom:12,letterSpacing:1,textTransform:"uppercase"}}>🚗 Latest Inventory</div>
+                {invLoading?([1,2,3,4].map(i=><div key={i} style={{display:"flex",gap:10,padding:"9px 0",borderBottom:"1px solid #14141e"}}><div className="skeleton" style={{flex:1}}></div><div className="skeleton" style={{width:60}}></div></div>)):inventory.slice(0,4).map((v,i)=>(
+                  <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"9px 0",borderBottom:"1px solid #14141e"}}>
+                    <div><div style={{fontSize:13,fontWeight:600}}>{v.year} {v.make} {v.model}</div><div style={{fontSize:11,color:"#444"}}>{v.location}</div></div>
+                    <span style={{fontSize:12,fontWeight:700,color:"#E63946"}}>{fmtCur(v.price)}</span>
+                  </div>
+                ))}
+                <button className="btn-sm" style={{marginTop:12,width:"100%",fontSize:12}} onClick={()=>setTab("inventory")}>View All {inventory.length} Vehicles →</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {tab==="clients"&&(
+          <div className="fu" style={{display:"grid",gridTemplateColumns:selectedLead?"1fr 360px":"1fr",gap:18}}>
+            <div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
+                <div><h2 style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:2}}>CLIENTS</h2><p style={{fontSize:12,color:"#444"}}>{leads.length} contacts</p></div>
+                <button className="btn-red" onClick={()=>setAddClientOpen(true)}>+ Add New Client</button>
+              </div>
+              <div className="card" style={{padding:0,overflow:"hidden"}}>
+                {leads.map(l=>(
+                  <div key={l.id} className={"lead-row"+(selectedLead?.id===l.id?" sel":"")} onClick={()=>setSelectedLead(l)}>
+                    <div style={{width:36,height:36,borderRadius:"50%",background:"#181828",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:"#E63946",flexShrink:0}}>{l.name.split(" ").map(n=>n[0]).join("")}</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        <span style={{fontSize:14,fontWeight:600}}>{l.name}</span>
+                        <span style={{padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:700,background:STATUS_C[l.status].bg,color:STATUS_C[l.status].text}}>{l.status}</span>
+                      </div>
+                      <div style={{fontSize:12,color:"#444",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.interestedIn} · {l.location}</div>
+                    </div>
+                    <span style={{fontSize:11,color:"#333",flexShrink:0}}>{l.lastContact}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {selectedLead&&(
+              <div className="card fu" style={{position:"sticky",top:0,alignSelf:"start"}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:14}}>
+                  <div><h3 style={{fontSize:16,fontWeight:700}}>{selectedLead.name}</h3><span style={{padding:"2px 9px",borderRadius:20,fontSize:10,fontWeight:700,background:STATUS_C[selectedLead.status].bg,color:STATUS_C[selectedLead.status].text,display:"inline-block",marginTop:4}}>{selectedLead.status}</span></div>
+                  <button style={{background:"none",border:"none",color:"#444",cursor:"pointer",fontSize:20}} onClick={()=>setSelectedLead(null)}>×</button>
+                </div>
+                {[["📞",selectedLead.phone],["✉️",selectedLead.email],["📍",selectedLead.location]].map(([ic,v])=>(
+                  <div key={v} style={{display:"flex",gap:8,fontSize:13,color:"#888",marginBottom:7}}><span>{ic}</span><span>{v}</span></div>
+                ))}
+                <div style={{background:"#0D0D14",borderRadius:10,padding:12,margin:"12px 0"}}>
+                  <div style={{fontSize:10,color:"#444",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Notes</div>
+                  <p style={{fontSize:13,color:"#888",lineHeight:1.6}}>{selectedLead.notes}</p>
+                </div>
+                <div style={{marginBottom:14}}>
+                  <div style={{fontSize:10,color:"#444",fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Paired Vehicle</div>
+                  {paired[selectedLead.id]?(
+                    <div style={{background:"rgba(230,57,70,.07)",border:"1px solid rgba(230,57,70,.2)",borderRadius:10,padding:12}}>
+                      <div style={{fontSize:13,fontWeight:700}}>{paired[selectedLead.id].year} {paired[selectedLead.id].make} {paired[selectedLead.id].model}</div>
+                      <div style={{fontSize:12,color:"#666"}}>#{paired[selectedLead.id].stock} · {fmtCur(paired[selectedLead.id].price)}</div>
+                      <button className="btn-sm" style={{marginTop:8,fontSize:11}} onClick={()=>setPairModal(selectedLead)}>Change</button>
+                    </div>
+                  ):<button className="btn-sm" style={{width:"100%"}} onClick={()=>setPairModal(selectedLead)}>+ Pair a Vehicle</button>}
+                </div>
+                <div style={{display:"flex",gap:8}}>
+                  <button className="btn-red" style={{flex:1,fontSize:12}}>Log Follow-Up</button>
+                  <button className="btn-sm">📱 DM</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab==="inventory"&&(
+          <div className="fu">
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14,flexWrap:"wrap",gap:10}}>
+              <div>
+                <h2 style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:2}}>INVENTORY</h2>
+                <p style={{fontSize:12,color:"#444"}}>{invLoading?"Loading from houseofcars.com…":inventory.length+" vehicles from houseofcars.com"+(lastSynced?" · synced "+lastSynced:"")}</p>
+              </div>
+              <button className="btn-red" onClick={()=>loadInventory(true)} disabled={syncing||invLoading} style={{display:"flex",alignItems:"center",gap:8}}>
+                {syncing?<><span className="spin"></span>Syncing…</>:"🔄 Sync with House of Cars"}
+              </button>
+            </div>
+            {syncMsg.text&&<div style={{background:syncMsg.type==="success"?"rgba(52,199,89,.1)":"rgba(230,57,70,.1)",border:"1px solid "+(syncMsg.type==="success"?"rgba(52,199,89,.3)":"rgba(230,57,70,.3)"),borderRadius:10,padding:"11px 16px",marginBottom:14,fontSize:13,color:syncMsg.type==="success"?"#34C759":"#E63946"}} className="fu">{syncMsg.text}</div>}
+            {invLoading&&<div className="card" style={{padding:0,overflow:"hidden"}}>{[1,2,3,4,5,6,7,8].map(i=><div key={i} style={{display:"flex",gap:16,padding:"12px 16px",borderBottom:"1px solid #12121c"}}>{[80,60,80,120,70,100,60,70].map((w,j)=><div key={j} className="skeleton" style={{width:w,flexShrink:0}}></div>)}</div>)}</div>}
+            {!invLoading&&<>
+              <div style={{display:"flex",gap:10,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {invTypes.map(t=><button key={t} onClick={()=>setInvFilter(t)} style={{background:invFilter===t?"#E63946":"rgba(255,255,255,.05)",color:invFilter===t?"#fff":"#777",border:"1px solid",borderColor:invFilter===t?"#E63946":"#252535",borderRadius:7,padding:"6px 12px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans'"}}>{t}</button>)}
+                </div>
+                <select className="inp" style={{width:"auto",minWidth:160,fontSize:12,padding:"6px 12px"}} value={invLoc} onChange={e=>setInvLoc(e.target.value)}>
+                  {invLocs.map(l=><option key={l} value={l}>{l==="All"?"All Locations":"📍 "+l}</option>)}
+                </select>
+                <span style={{fontSize:11,color:"#333",marginLeft:"auto"}}>{filteredInv.length} shown</span>
+              </div>
+              <div className="card" style={{padding:0,overflow:"hidden"}}>
+                <div style={{overflowX:"auto"}}>
+                  <table style={{width:"100%",borderCollapse:"collapse"}}>
+                    <thead><tr style={{background:"#0D0D14"}}>
+                      {[["stock","Stock"],["year","Year"],["make","Make"],["model","Model"],["price","Price"],["location","Location"],["type","Type"],["mileage","KM"]].map(([c,l])=>(
+                        <th key={c} onClick={()=>toggleSort(c)}>{l}{arr(c)}</th>
+                      ))}
+                      <th>Actions</th>
+                    </tr></thead>
+                    <tbody>
+                      {filteredInv.map((v,i)=>(
+                        <tr key={i}>
+                          <td><span style={{fontFamily:"monospace",fontSize:11,color:"#555"}}>{v.stock}</span></td>
+                          <td style={{fontWeight:700}}>{v.year}</td>
+                          <td>{v.make}</td>
+                          <td>{v.model}</td>
+                          <td style={{color:"#E63946",fontWeight:700}}>{fmtCur(v.price)}</td>
+                          <td><span style={{fontSize:11,background:"rgba(255,255,255,.04)",border:"1px solid #252535",borderRadius:5,padding:"2px 8px",whiteSpace:"nowrap"}}>📍 {v.location}</span></td>
+                          <td>{v.type&&<span className="tag">{v.type}</span>}</td>
+                          <td style={{color:"#555",fontSize:12}}>{v.mileage}</td>
+                          <td>
+                            <div style={{display:"flex",gap:6}}>
+                              <button className="btn-sm" style={{fontSize:11,padding:"4px 9px"}} onClick={()=>fbLinked?openFbPost(v):setTab("social")}>📘</button>
+                              {v.listingUrl&&<a href={v.listingUrl} target="_blank" rel="noopener noreferrer" style={{fontSize:11,padding:"4px 9px",background:"rgba(255,255,255,.07)",color:"#bbb",border:"1px solid #2a2a38",borderRadius:7,textDecoration:"none"}}>↗</a>}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>}
+          </div>
+        )}
+
+        {tab==="social"&&(
+          <div className="fu">
+            <div style={{marginBottom:18}}><h2 style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:2}}>SOCIAL</h2><p style={{fontSize:12,color:"#444"}}>Connect Facebook to post vehicles directly.</p></div>
+            {!fbLinked?(
+              <div style={{background:"#181830",border:"1px solid #252545",borderRadius:14,padding:32,textAlign:"center"}}>
+                <div style={{fontSize:48,marginBottom:12}}>📘</div>
+                <div style={{fontSize:18,fontWeight:700,marginBottom:8}}>Link Your Facebook Account</div>
+                <p style={{fontSize:13,color:"#555",maxWidth:400,margin:"0 auto 22px",lineHeight:1.6}}>Post vehicle ads directly, respond to DMs, and schedule posts — all from inside HOCRM.</p>
+                <button style={{background:"#1877F2",color:"#fff",border:"none",borderRadius:9,padding:"12px 28px",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans'"}} onClick={()=>setFbLinked(true)}>Connect with Facebook</button>
+              </div>
+            ):<>
+              <div style={{background:"rgba(24,119,242,.1)",border:"1px solid rgba(24,119,242,.3)",borderRadius:12,padding:"12px 18px",marginBottom:18,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10}}><span style={{fontSize:20}}>📘</span><div><div style={{fontSize:13,fontWeight:700,color:"#4da3ff"}}>Facebook Connected</div><div style={{fontSize:11,color:"#555"}}>House of Cars · Page linked</div></div></div>
+                <button className="btn-sm" style={{fontSize:11}} onClick={()=>setFbLinked(false)}>Disconnect</button>
+              </div>
+              <div className="card" style={{marginBottom:16}}>
+                <div style={{fontSize:11,fontWeight:700,color:"#E63946",marginBottom:12,letterSpacing:1,textTransform:"uppercase"}}>📣 Post a Vehicle</div>
+                <div style={{display:"grid",gap:8}}>
+                  {inventory.slice(0,8).map((v,i)=>(
+                    <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#0D0D14",borderRadius:9,padding:"10px 14px"}}>
+                      <div><span style={{fontSize:13,fontWeight:600}}>{v.year} {v.make} {v.model}</span><span style={{fontSize:11,color:"#555",marginLeft:10}}>{fmtCur(v.price)} · {v.location}</span></div>
+                      <button className="btn-sm" style={{fontSize:11}} onClick={()=>openFbPost(v)}>📘 Open & Post</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>}
+          </div>
+        )}
+
+        {tab==="accounts"&&(
+          <div className="fu">
+            <div style={{marginBottom:18}}><h2 style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:2}}>ACCOUNTS</h2><p style={{fontSize:12,color:"#444"}}>@houseofcars.com and @houseofcarscalgary.com only.</p></div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 380px",gap:18,alignItems:"start"}}>
+              <div className="card" style={{padding:0,overflow:"hidden"}}>
+                <div style={{overflowX:"auto"}}>
+                  <table style={{width:"100%",borderCollapse:"collapse"}}>
+                    <thead><tr style={{background:"#0D0D14"}}><th>Name</th><th>Email</th><th>Location</th><th>Role</th><th>Joined</th></tr></thead>
+                    <tbody>
+                      {accounts.map((a,i)=>(
+                        <tr key={i}>
+                          <td style={{fontWeight:600}}>{a.name}</td>
+                          <td style={{fontSize:12,color:"#666",fontFamily:"monospace"}}>{a.email}</td>
+                          <td><span style={{fontSize:11,background:"rgba(255,255,255,.04)",border:"1px solid #252535",borderRadius:5,padding:"2px 7px"}}>📍 {a.location}</span></td>
+                          <td><span style={{fontSize:11,background:a.role==="Admin"?"rgba(230,57,70,.14)":a.role==="Manager"?"rgba(255,149,0,.14)":"rgba(10,132,255,.14)",color:a.role==="Admin"?"#E63946":a.role==="Manager"?"#FF9500":"#0A84FF",border:"1px solid",borderColor:a.role==="Admin"?"rgba(230,57,70,.3)":a.role==="Manager"?"rgba(255,149,0,.3)":"rgba(10,132,255,.3)",borderRadius:5,padding:"2px 8px",fontWeight:700}}>{a.role}</span></td>
+                          <td style={{fontSize:12,color:"#555"}}>{a.joined}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="card" style={{position:"sticky",top:0}}>
+                <div style={{fontSize:11,fontWeight:700,color:"#E63946",marginBottom:14,letterSpacing:1,textTransform:"uppercase"}}>🔐 Create Account</div>
+                {regOk&&<div style={{background:"rgba(52,199,89,.1)",border:"1px solid rgba(52,199,89,.3)",borderRadius:9,padding:"10px 14px",marginBottom:12,fontSize:13,color:"#34C759"}}>✅ Account created!</div>}
+                {regErr&&<div style={{background:"rgba(230,57,70,.1)",border:"1px solid rgba(230,57,70,.3)",borderRadius:9,padding:"10px 14px",marginBottom:12,fontSize:13,color:"#E63946",lineHeight:1.5}}>⚠️ {regErr}</div>}
+                <div style={{display:"grid",gap:10}}>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
+                    <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>First Name</div><input className="inp" placeholder="First" value={regForm.firstName} onChange={e=>{setRegForm(p=>({...p,firstName:e.target.value}));setRegErr("");setRegOk(false);}}/></div>
+                    <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>Last Name</div><input className="inp" placeholder="Last" value={regForm.lastName} onChange={e=>{setRegForm(p=>({...p,lastName:e.target.value}));setRegErr("");setRegOk(false);}}/></div>
+                  </div>
+                  <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>Work Email</div><input className="inp" placeholder="name@houseofcars.com" value={regForm.email} onChange={e=>{setRegForm(p=>({...p,email:e.target.value}));setRegErr("");setRegOk(false);}}/></div>
+                  <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>Location</div>
+                    <select className="inp" value={regForm.location} onChange={e=>setRegForm(p=>({...p,location:e.target.value}))}>
+                      <option value="">Select…</option>
+                      {HOC_LOCATIONS.map(l=><option key={l.id} value={l.name}>{l.name}</option>)}
+                    </select>
+                  </div>
+                  <div><div style={{fontSize:11,color:"#444",marginBottom:5}}>Role</div>
+                    <div style={{display:"flex",gap:7}}>
+                      {["Sales","Manager","Admin"].map(r=>(
+                        <button key={r} onClick={()=>setRegForm(p=>({...p,role:r}))} style={{flex:1,background:regForm.role===r?"rgba(230,57,70,.15)":"rgba(255,255,255,.04)",color:regForm.role===r?"#E63946":"#666",border:"1px solid",borderColor:regForm.role===r?"rgba(230,57,70,.35)":"#252535",borderRadius:7,padding:"6px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans'"}}>{r}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>Password</div><input className="inp" type="password" placeholder="Min. 8 chars" value={regForm.password} onChange={e=>setRegForm(p=>({...p,password:e.target.value}))}/></div>
+                  <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>Confirm</div><input className="inp" type="password" placeholder="Repeat" value={regForm.confirm} onChange={e=>setRegForm(p=>({...p,confirm:e.target.value}))}/></div>
+                  <button className="btn-red" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8}} onClick={doRegister} disabled={regLoading}>
+                    {regLoading?<><span className="spin"></span>Creating…</>:"Create Account"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {pairModal&&(
+        <div className="overlay" onClick={()=>setPairModal(null)}>
+          <div className="modal" onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:20,letterSpacing:2}}>PAIR VEHICLE TO {pairModal.name?.toUpperCase()}</h3>
+              <button style={{background:"none",border:"none",color:"#555",cursor:"pointer",fontSize:20}} onClick={()=>setPairModal(null)}>×</button>
+            </div>
+            <div style={{display:"grid",gap:8}}>
+              {inventory.slice(0,30).map((v,i)=>(
+                <div key={i} onClick={()=>{setPaired(p=>({...p,[pairModal.id]:v}));setPairModal(null);}} style={{display:"flex",alignItems:"center",gap:12,background:paired[pairModal.id]?.stock===v.stock?"rgba(230,57,70,.1)":"#0D0D14",border:"1px solid "+(paired[pairModal.id]?.stock===v.stock?"#E63946":"#1a1a24"),borderRadius:10,padding:"10px 14px",cursor:"pointer"}}>
+                  <span style={{fontSize:20}}>{typeEmoji(v.type)}</span>
+                  <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600}}>{v.year} {v.make} {v.model}</div><div style={{fontSize:11,color:"#555"}}>#{v.stock} · {v.location}</div></div>
+                  <span style={{fontSize:14,fontWeight:700,color:"#E63946"}}>{fmtCur(v.price)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {addClientOpen&&(
+        <div className="overlay" onClick={()=>setAddClientOpen(false)}>
+          <div className="modal" onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:20,letterSpacing:2}}>ADD NEW CLIENT</h3>
+              <button style={{background:"none",border:"none",color:"#555",cursor:"pointer",fontSize:20}} onClick={()=>setAddClientOpen(false)}>×</button>
+            </div>
+            <div style={{display:"grid",gap:11}}>
+              {[["Full Name","name","text"],["Phone","phone","text"],["Email","email","email"],["Location / Area","location","text"]].map(([lbl,fld,typ])=>(
+                <div key={fld}><div style={{fontSize:11,color:"#444",marginBottom:4}}>{lbl}</div><input className="inp" type={typ} placeholder={lbl} value={newClient[fld]} onChange={e=>setNewClient(p=>({...p,[fld]:e.target.value}))}/></div>
+              ))}
+              <div><div style={{fontSize:11,color:"#444",marginBottom:5}}>Status</div>
+                <div style={{display:"flex",gap:8}}>
+                  {["Hot","Warm","Cold"].map(s=>(
+                    <button key={s} onClick={()=>setNewClient(p=>({...p,status:s}))} style={{flex:1,background:newClient.status===s?STATUS_C[s].bg:"rgba(255,255,255,.05)",color:newClient.status===s?"#fff":"#777",border:"1px solid",borderColor:newClient.status===s?STATUS_C[s].bg:"#252535",borderRadius:7,padding:"8px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans'"}}>{s}</button>
+                  ))}
+                </div>
+              </div>
+              <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>Notes</div><textarea className="inp" rows={3} placeholder="Any notes…" value={newClient.notes} onChange={e=>setNewClient(p=>({...p,notes:e.target.value}))} style={{resize:"vertical"}}/></div>
+              <div><div style={{fontSize:11,color:"#444",marginBottom:4}}>Interested In</div>
+                <select className="inp" value={newClient.interestedIn} onChange={e=>setNewClient(p=>({...p,interestedIn:e.target.value}))}>
+                  <option value="">Select a vehicle…</option>
+                  {inventory.slice(0,50).map((v,i)=><option key={i} value={v.year+" "+v.make+" "+v.model}>{v.year} {v.make} {v.model} — {fmtCur(v.price)}</option>)}
+                </select>
+              </div>
+              <button className="btn-red" onClick={()=>{
+                if(!newClient.name)return;
+                setLeads(p=>[...p,{...newClient,id:Date.now(),lastContact:"Just now",interestedIn:newClient.interestedIn||"TBD"}]);
+                setAddClientOpen(false);
+                setNewClient({name:"",phone:"",email:"",status:"Warm",location:"",notes:"",interestedIn:""});
+              }}>Add Client</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {fbMini&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.9)",zIndex:300,display:"flex",flexDirection:"column"}}>
+          <div style={{background:"#1877F2",padding:"10px 18px",display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
+            <span style={{fontSize:20}}>📘</span>
+            <div style={{flex:1}}><div style={{color:"#fff",fontWeight:700,fontSize:14}}>Facebook · Create Post</div><div style={{color:"rgba(255,255,255,.6)",fontSize:12}}>House of Cars · {fbMini.location}</div></div>
+            <button onClick={()=>setFbMini(null)} style={{background:"rgba(0,0,0,.3)",border:"none",color:"#fff",borderRadius:6,padding:"6px 14px",cursor:"pointer",fontSize:13,fontFamily:"'DM Sans'"}}>✕ Close</button>
+          </div>
+          <div style={{flex:1,overflowY:"auto",display:"flex",justifyContent:"center",padding:28,background:"#18191A"}}>
+            <div style={{width:520,maxWidth:"100%"}}>
+              <div style={{background:"#242526",border:"1px solid #3a3b3c",borderRadius:12,padding:20,marginBottom:16}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+                  <div style={{width:36,height:36,borderRadius:"50%",background:"#E63946",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>🚗</div>
+                  <div><div style={{fontWeight:700,color:"#e4e6eb",fontSize:14}}>House of Cars · {fbMini.location}</div><div style={{fontSize:12,color:"#b0b3b8"}}>Now · 🌍 Public</div></div>
+                </div>
+                <textarea value={fbDraft} onChange={e=>setFbDraft(e.target.value)} style={{width:"100%",background:"transparent",border:"none",color:"#e4e6eb",fontSize:14,lineHeight:1.7,resize:"none",outline:"none",fontFamily:"'DM Sans'",minHeight:200}}/>
+                <div style={{background:"#3a3b3c",borderRadius:8,padding:"12px 14px",marginTop:10,display:"flex",gap:12,alignItems:"center"}}>
+                  <span style={{fontSize:26}}>{typeEmoji(fbMini.type)}</span>
+                  <div>
+                    <div style={{color:"#e4e6eb",fontWeight:700,fontSize:13}}>{fbMini.year} {fbMini.make} {fbMini.model}</div>
+                    <div style={{color:"#b0b3b8",fontSize:12}}>Stock #{fbMini.stock} · {fmtCur(fbMini.price)}</div>
+                    <div style={{color:"#b0b3b8",fontSize:12}}>📍 {fbMini.location} · {fbMini.mileage}</div>
+                  </div>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:10}}>
+                <button onClick={()=>{setFbPosted(p=>[{id:Date.now(),vehicle:fbMini.year+" "+fbMini.make+" "+fbMini.model,time:"Just now"},...p]);setFbMini(null);}} style={{flex:1,background:"#1877F2",color:"#fff",border:"none",borderRadius:9,padding:"12px",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans'"}}>Post to Facebook</button>
+                <button onClick={()=>setFbMini(null)} style={{background:"#3a3b3c",color:"#e4e6eb",border:"none",borderRadius:9,padding:"12px 20px",fontSize:14,cursor:"pointer",fontFamily:"'DM Sans'"}}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
