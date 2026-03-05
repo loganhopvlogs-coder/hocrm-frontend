@@ -1545,7 +1545,18 @@ function App() {
               ):agentStatus?.state&&!["idle","complete","error"].includes(agentStatus.state)?(
                 <button style={{...btnP,background:"#E63946",flex:1}} onClick={stopAgent}>⏹ Stop Agent</button>
               ):(
-                <button style={{...btnP,flex:1,opacity:agentRunning?1:.5}} onClick={startAgentJob} disabled={!agentRunning}>🤖 Post to Facebook Marketplace</button>
+                {(()=>{
+                  const hasMileage = agentVehicle?.mileage && String(agentVehicle.mileage).replace(/[^0-9]/g,"").length > 0;
+                  const hasPhotos  = (vPhotos[agentVehicle?.stock]||[]).length > 0;
+                  const canPost    = agentRunning && hasMileage && hasPhotos;
+                  return (
+                    <div style={{width:"100%"}}>
+                      {!hasMileage&&<div style={{...nErr,fontSize:11,marginBottom:8}}>⚠️ This vehicle has no mileage on file. Add it in the vehicle details before posting.</div>}
+                      {!hasPhotos&&<div style={{...nErr,fontSize:11,marginBottom:8}}>⚠️ No photos uploaded yet. Upload at least one photo before posting.</div>}
+                      <button style={{...btnP,width:"100%",opacity:canPost?1:.4}} onClick={startAgentJob} disabled={!canPost}>🤖 Post to Facebook Marketplace</button>
+                    </div>
+                  );
+                })()}
               )}
               {agentStatus?.state!=="review"&&<button style={{...btnS}} onClick={()=>setShowAgent(false)}>Cancel</button>}
             </div>
