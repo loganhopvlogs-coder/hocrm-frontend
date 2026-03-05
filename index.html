@@ -1502,6 +1502,24 @@ function App() {
               <div style={{fontSize:15,fontWeight:700,color:T.text}}>{agentVehicle.year} {agentVehicle.make} {agentVehicle.model}</div>
               <div style={{fontSize:12,color:T.muted}}>Stock #{agentVehicle.stock} · {agentVehicle.mileage} · ${Number(agentVehicle.price||0).toLocaleString()} + GST · 📍 {agentVehicle.location}</div>
             </div>
+            {/* Photos */}
+            <div style={{marginBottom:14}}>
+              <div style={{fontSize:11,color:T.muted,marginBottom:5,fontWeight:600}}>PHOTOS <span style={{fontWeight:400,color:"#E63946"}}>* required</span></div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:8}}>
+                {(vPhotos[agentVehicle?.stock]||[]).map((p,i)=>(
+                  <img key={i} src={p.url||p.data_url} alt="" style={{width:72,height:52,objectFit:"cover",borderRadius:6,border:`1px solid ${T.border}`}} onError={e=>e.target.style.display="none"}/>
+                ))}
+                {(vPhotos[agentVehicle?.stock]||[]).length===0&&(
+                  <div style={{fontSize:11,color:T.muted,padding:"8px 0"}}>No photos yet — upload below</div>
+                )}
+              </div>
+              <label style={{...btnS,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:6,fontSize:12}}>
+                {photoUploading?<><span className="spin"></span>Uploading…</>:<>📷 Upload Photos</>}
+                <input type="file" accept="image/*" multiple style={{display:"none"}} onChange={e=>handlePhotoUpload(e,agentVehicle.stock)} disabled={photoUploading}/>
+              </label>
+              <div style={{fontSize:10,color:T.muted,marginTop:4}}>Upload at least 1 photo. You can add more in the Facebook window after the agent opens.</div>
+            </div>
+
             <div style={{marginBottom:12}}>
               <div style={{fontSize:11,color:T.muted,marginBottom:5,fontWeight:600}}>FEATURES <span style={{fontWeight:400}}>(one per line)</span></div>
               <textarea style={{...inp,width:"100%",minHeight:100,fontSize:12,lineHeight:1.6,resize:"vertical"}} placeholder={"Heated seats\nBackup camera\nApple CarPlay\nBlind spot monitoring"} value={agentFeatures} onChange={e=>setAgentFeatures(e.target.value)}/>
