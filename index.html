@@ -317,6 +317,22 @@ function App() {
     }catch(e){ setSyncMsg({t:"❌ "+e.message,type:"error"}); }
   };
 
+  const pullDataset = async () => {
+    if(!window.confirm("Pull the latest completed Apify dataset into Supabase?\n\nOnly use this if a sync was approved but the server timed out before it could finish writing."))return;
+    setSyncRequesting(true); setSyncMsg({t:"",type:""});
+    try{
+      const r = await fetch(BACKEND+"/inventory/pull-dataset", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({userId:user.id, userName:user.first_name+" "+user.last_name, userRole:user.role, datasetId:APIFY_DATASET_ID})
+      });
+      const j = await r.json();
+      if(!j.success) throw new Error(j.error);
+      setSyncMsg({t:"📥 "+j.message,type:"success"});
+      setTimeout(()=>loadInv(),3000);
+    }catch(e){ setSyncMsg({t:"❌ "+e.message,type:"error"}); }
+    finally{ setSyncRequesting(false); setTimeout(()=>setSyncMsg({t:"",type:""}),8000); }
+  };
+
   const denySync = async (requestId) => {
     try{
       await fetch(BACKEND+"/inventory/deny-sync", {
@@ -1078,6 +1094,11 @@ function App() {
                 )}
                 {isCooldown&&!isRunning&&!isPending&&(
                   <div style={{...nWarn,marginBottom:0,fontSize:11,padding:"6px 12px"}}>⏳ Next sync available {ss.nextAvailable} ({ss.hoursRemaining}h)</div>
+                )}
+                {canApproveSyncs&&!isRunning&&(
+                  <button style={{...btnS,fontSize:11,display:"flex",alignItems:"center",gap:5,color:"#BF5AF2",borderColor:"rgba(191,90,242,.4)"}} onClick={pullDataset} disabled={syncRequesting}>
+                    {syncRequesting?<><span className="spin"></span>Pulling…</>:"📥 Pull Apify Dataset"}
+                  </button>
                 )}
                 {isPending&&!canApproveSyncs&&(
                   <div style={{...nInfo,marginBottom:0,fontSize:11,padding:"6px 12px"}}>🕐 Sync pending admin approval…</div>
