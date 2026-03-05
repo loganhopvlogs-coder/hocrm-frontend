@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
 <title>House of Cars — CRM</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -11,26 +11,33 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif}
-::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{border-radius:2px;background:#2a2a38}
-.tab-btn{background:none;border:none;cursor:pointer;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;border-radius:8px;transition:all .2s;display:flex;align-items:center;gap:6px;white-space:nowrap}
-.lead-row{display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;transition:background .15s;border-bottom-width:1px;border-bottom-style:solid}
-.auth-bg{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
-.auth-box{border-radius:22px;padding:40px 36px;width:420px;max-width:100%}
-.skeleton{background:linear-gradient(90deg,#1a1a24 25%,#222230 50%,#1a1a24 75%);background-size:1000px 100%;animation:shimmer 1.5s infinite;border-radius:6px;height:14px}
+body{font-family:'DM Sans',sans-serif;-webkit-tap-highlight-color:transparent}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{border-radius:2px;background:#333}
+.tab-btn{background:none;border:none;cursor:pointer;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;border-radius:8px;transition:all .2s;display:flex;align-items:center;gap:5px;white-space:nowrap}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes shimmer{0%{background-position:-1000px 0}100%{background-position:1000px 0}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
 .spin{width:15px;height:15px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .65s linear infinite;display:inline-block;flex-shrink:0}
 .fu{animation:fadeUp .3s ease both}
-.pool-btn{animation:pulse 2s infinite}
+.skeleton{background:linear-gradient(90deg,#1a1a24 25%,#222230 50%,#1a1a24 75%);background-size:1000px 100%;animation:shimmer 1.5s infinite;border-radius:6px;height:14px}
+@media(max-width:768px){
+  .desktop-only{display:none!important}
+  .mobile-nav{display:flex!important}
+  .main-content{padding:12px!important}
+  .two-col{grid-template-columns:1fr!important}
+  .inv-table{font-size:11px}
+  .modal-inner{width:100%!important;border-radius:14px 14px 0 0!important;position:fixed!important;bottom:0!important;top:auto!important;max-height:92vh!important}
+  .overlay-mobile{align-items:flex-end!important}
+}
+@media(min-width:769px){.mobile-only{display:none!important}}
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useMemo, useEffect, useRef } = React;
+const { useState, useMemo, useEffect, useRef, useCallback } = React;
 
 const SUPA_URL = "https://dmeigygmmxwmkyniizzj.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtZWlneWdtbXh3bWt5bmlpenpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzU2NDEsImV4cCI6MjA4ODE1MTY0MX0.hTv4RICUBNWFNLsQEaZVqcbviqD0ZZSinwCzdSLRDJo";
@@ -38,46 +45,64 @@ const sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 const INV_URL = "https://hocrm-backend.onrender.com/inventory";
 const ALLOWED = ["houseofcarscalgary.com","houseofcars.com"];
 const LOCS = ["52 Street","Airdrie","Barlow Trail","Chinook","Cochrane","Deerfoot Meadows","MacLeod Trail","McKnight Blvd","Olympic Park","Edmonton","Lethbridge","Medicine Hat"];
-const STATUS_C = {Hot:"#E63946",Warm:"#FF9500",Cold:"#555"};
+
+const STATUSES = [
+  {label:"Hot Lead",        color:"#E63946", icon:"🔥"},
+  {label:"Warm",            color:"#FF9500", icon:"☀️"},
+  {label:"Cold",            color:"#636e72", icon:"❄️"},
+  {label:"Approved",        color:"#34C759", icon:"✅"},
+  {label:"Approved - Picking Unit", color:"#00b894", icon:"🚗"},
+  {label:"Not Approved",    color:"#d63031", icon:"❌"},
+  {label:"Do Not Call",     color:"#2d3436", icon:"🚫"},
+  {label:"Deposit Taken",   color:"#6c5ce7", icon:"💰"},
+  {label:"Sold",            color:"#00cec9", icon:"🏆"},
+  {label:"Follow Up",       color:"#0984e3", icon:"📅"},
+  {label:"Waiting Finance", color:"#e17055", icon:"⏳"},
+];
+const statusColor = s => STATUSES.find(x=>x.label===s)?.color || "#636e72";
+const statusIcon  = s => STATUSES.find(x=>x.label===s)?.icon  || "●";
+
+const LOG_TYPES = [
+  {type:"call",    label:"Attempted Call", icon:"📞", color:"#0A84FF"},
+  {type:"email",   label:"Sent Email",     icon:"✉️", color:"#34C759"},
+  {type:"note",    label:"Note",           icon:"📝", color:"#FF9500"},
+  {type:"status",  label:"Status Change",  icon:"🔄", color:"#BF5AF2"},
+  {type:"system",  label:"System",         icon:"⚙️", color:"#555"},
+];
+const logColor = t => LOG_TYPES.find(x=>x.type===t)?.color||"#555";
+const logIcon  = t => LOG_TYPES.find(x=>x.type===t)?.icon||"●";
+
 const typeEmoji = t=>({Truck:"🛻",SUV:"🚙",Sedan:"🚗",Van:"🚐"}[t]||"🚗");
 const fmtCur = n=>n?"$"+Number(n).toLocaleString():"—";
 const fmtDate = d=>d?new Date(d).toLocaleDateString("en-CA",{month:"short",day:"numeric",year:"numeric"}):"—";
-const fmtKM = m=>m?String(m).replace(/\B(?=(\d{3})+(?!\d))/g,",")+(" KM"):"";
+const fmtTime = d=>d?new Date(d).toLocaleString("en-CA",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}):"—";
 
 const THEMES = {
-  dark:  {name:"Dark (Default)",bg:"#0A0A0F",surface:"#13131A",border:"#1E1E2A",text:"#E8E8F0",muted:"#555",accent:"#E63946",nav:"#0D0D14",input:"#16161f",inputBorder:"#252535"},
-  light: {name:"Light",         bg:"#F0F2F5",surface:"#FFFFFF", border:"#E0E0E8",text:"#111118",muted:"#888",accent:"#E63946",nav:"#FFFFFF", input:"#F5F5FA",inputBorder:"#D0D0DC"},
-  blue:  {name:"Midnight Blue", bg:"#050C1A",surface:"#0D1B2E",border:"#1A2E45",text:"#E8F0FF",muted:"#4A6080",accent:"#0A84FF",nav:"#070E1C",input:"#0A1525",inputBorder:"#1A2E45"},
-  green: {name:"Forest",        bg:"#060F0A",surface:"#0D1F12",border:"#1A3020",text:"#E0F0E8",muted:"#3A6045",accent:"#34C759",nav:"#070F08",input:"#0A1A0E",inputBorder:"#1A3020"},
-  purple:{name:"Violet",        bg:"#0A060F",surface:"#15101F",border:"#251A35",text:"#EEE8FF",muted:"#5A4070",accent:"#BF5AF2",nav:"#0C0812",input:"#130E1C",inputBorder:"#251A35"},
-  white: {name:"Clean White",   bg:"#FFFFFF", surface:"#F8F9FA",border:"#DEE2E6",text:"#212529",muted:"#6C757D",accent:"#E63946",nav:"#FFFFFF", input:"#FFFFFF", inputBorder:"#CED4DA"},
+  dark:  {name:"Dark",      bg:"#0A0A0F",surface:"#13131A",border:"#1E1E2A",text:"#E8E8F0",muted:"#555",accent:"#E63946",nav:"#0D0D14",input:"#16161f",inputBorder:"#252535"},
+  light: {name:"Light",     bg:"#F0F2F5",surface:"#FFFFFF", border:"#E0E0E8",text:"#111118",muted:"#888",accent:"#E63946",nav:"#FFFFFF", input:"#F5F5FA",inputBorder:"#D0D0DC"},
+  blue:  {name:"Midnight",  bg:"#050C1A",surface:"#0D1B2E",border:"#1A2E45",text:"#E8F0FF",muted:"#4A6080",accent:"#0A84FF",nav:"#070E1C",input:"#0A1525",inputBorder:"#1A2E45"},
+  green: {name:"Forest",    bg:"#060F0A",surface:"#0D1F12",border:"#1A3020",text:"#E0F0E8",muted:"#3A6045",accent:"#34C759",nav:"#070F08",input:"#0A1A0E",inputBorder:"#1A3020"},
+  purple:{name:"Violet",    bg:"#0A060F",surface:"#15101F",border:"#251A35",text:"#EEE8FF",muted:"#5A4070",accent:"#BF5AF2",nav:"#0C0812",input:"#130E1C",inputBorder:"#251A35"},
+  white: {name:"Clean White",bg:"#FFFFFF",surface:"#F8F9FA",border:"#DEE2E6",text:"#212529",muted:"#6C757D",accent:"#E63946",nav:"#FFFFFF", input:"#FFFFFF", inputBorder:"#CED4DA"},
 };
 
-function getT(u){
-  const k = u?.theme?.mode||"dark";
-  return THEMES[k]||THEMES.dark;
-}
-
 function normalizeV(v,i){
-  return {id:i+1,stock:v.stock||"HOC-"+i,vin:v.vin||"",year:v.year||0,make:v.make||"",model:v.model||"",
+  return {id:i+1,stock:v.stock||"HOC-"+i,year:v.year||0,make:v.make||"",model:v.model||"",
     price:v.price||0,mileage:v.mileage||"",location:v.location||"",type:v.bodyType||v.type||"",
     color:v.color||"",image:v.image||"",listingUrl:v.listingUrl||v.url||"",condition:v.condition||"Used"};
 }
 
 function buildAd(v, features, intro){
-  const feat = features||"• All-Wheel Drive\n• Leather Interior\n• Heated Seats\n• Backup Camera\n• Premium Sound\n• Dual-Zone Climate Control\n• Power Everything\n• Push-Button Start\n• Alloy Wheels";
   const opening = intro||`Looking for a great ${v.type||"vehicle"} without breaking the bank? This ${v.year} ${v.make} ${v.model} delivers exactly that.`;
-  const colorLine = v.color?`${v.color} on ${v.color} `:"";
-  return `${v.year} ${v.make} ${v.model} ${colorLine}🔥 Stock #${v.stock} ${fmtKM(v.mileage)} ${fmtCur(v.price)} + GST
+  const colorLine = v.color?` ${v.color} on ${v.color}`:"";
+  const featBlock = features ? `\nLoaded with features including:\n${features}\n` : "\nLoaded with features including:\n• [Add features here]\n";
+  return `${v.year} ${v.make} ${v.model}${colorLine} 🔥 Stock #${v.stock} ${v.mileage} ${fmtCur(v.price)} + GST
 
 ${opening}
 
-Finished in ${v.color||"a great colour"}, this ${v.type||"vehicle"} brings sharp styling, smooth handling, and premium comfort together in one sharp package. Perfect for Alberta roads year-round.
-
-Loaded with features including:
-${feat}
-
-${fmtKM(v.mileage)?fmtKM(v.mileage)+" — p":"P"}riced aggressively at ${fmtCur(v.price)} + GST to reflect excellent value for the year and trim.
+Finished in ${v.color||"a great colour"}, this ${v.type||"vehicle"} brings sharp styling, smooth handling, and premium comfort — perfect for Alberta roads year-round.
+${featBlock}
+${v.mileage?v.mileage+" — p":"P"}riced aggressively at ${fmtCur(v.price)} + GST to reflect excellent value for the year and trim.
 
 Financing available O.A.C. All credit types welcome — good, bad, rebuilding, or great.
 
@@ -88,84 +113,126 @@ Message today to book a test drive before it's gone!
 #HouseOfCars #${(v.make||"").replace(/\s/g,"")} #${(v.model||"").replace(/\s/g,"")} #UsedCars #Alberta #CarSales #HouseOfCars${(v.location||"").replace(/\s/g,"")}`;
 }
 
-function App(){
-  const [screen,setScreen] = useState("login");
-  const [user,setUser]     = useState(null);
-  const [tab,setTab]       = useState("dashboard");
-  const [T,setT]           = useState(THEMES.dark);
-  const [themeKey,setThemeKey] = useState("dark");
+// ─── Supabase image upload helper ────────────────────────────────
+async function uploadVehiclePhoto(file, stock, userId) {
+  const ext = file.name.split('.').pop();
+  const path = `${stock}/${Date.now()}.${ext}`;
+  const { data, error } = await sb.storage.from('vehicle-photos').upload(path, file, { upsert: true });
+  if (error) throw error;
+  const { data: urlData } = sb.storage.from('vehicle-photos').getPublicUrl(path);
+  await sb.from('vehicle_photos').insert({ stock, url: urlData.publicUrl, uploaded_by: userId });
+  return urlData.publicUrl;
+}
+
+// ════════════════════════════════════════════════════════════════
+function App() {
+  const [screen, setScreen] = useState("login");
+  const [user, setUser]     = useState(null);
+  const [tab, setTab]       = useState("dashboard");
+  const [T, setT]           = useState(THEMES.dark);
+  const [themeKey, setThemeKey] = useState("dark");
+  const [customAccent, setCustomAccent] = useState("");
 
   // Auth
-  const [lf,setLf]       = useState({email:"",password:""});
-  const [sf,setSf]       = useState({firstName:"",lastName:"",email:"",location:"",role:"Sales",password:"",confirm:""});
-  const [fgEmail,setFgEmail] = useState("");
-  const [aErr,setAErr]   = useState("");
-  const [aMsg,setAMsg]   = useState("");
-  const [aLoad,setALoad] = useState(false);
-  const [showPw,setShowPw] = useState(false);
+  const [lf, setLf]     = useState({email:"",password:""});
+  const [sf, setSf]     = useState({firstName:"",lastName:"",email:"",location:"",role:"Sales",password:"",confirm:""});
+  const [fgEmail, setFgEmail] = useState("");
+  const [aErr, setAErr] = useState("");
+  const [aMsg, setAMsg] = useState("");
+  const [aLoad, setALoad] = useState(false);
+  const [showPw, setShowPw] = useState(false);
 
   // Inventory
-  const [inv,setInv]         = useState([]);
-  const [invLoad,setInvLoad] = useState(false);
-  const [invErr,setInvErr]   = useState("");
-  const [synced,setSynced]   = useState(null);
-  const [syncing,setSyncing] = useState(false);
-  const [syncMsg,setSyncMsg] = useState({t:"",type:""});
-  const [iFilter,setIFilter] = useState("All");
-  const [iLoc,setILoc]       = useState("All");
-  const [iSort,setISort]     = useState({col:"price",dir:"desc"});
-  const [iSearch,setISearch] = useState("");
+  const [inv, setInv]       = useState([]);
+  const [invLoad, setInvLoad] = useState(false);
+  const [invErr, setInvErr] = useState("");
+  const [synced, setSynced] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState({t:"",type:""});
+  const [iFilter, setIFilter] = useState("All");
+  const [iLoc, setILoc]     = useState("All");
+  const [iSort, setISort]   = useState({col:"price",dir:"desc"});
+  const [iSearch, setISearch] = useState("");
+  const [selVehicle, setSelVehicle] = useState(null);
+  const [vPhotos, setVPhotos] = useState({});
+  const [photoUploading, setPhotoUploading] = useState(false);
 
   // Clients
-  const [clients,setClients]   = useState([]);
-  const [cLoad,setCLoad]       = useState(false);
-  const [selC,setSelC]         = useState(null);
-  const [addC,setAddC]         = useState(false);
-  const [editC,setEditC]       = useState(false);
-  const [cf,setCf]             = useState({name:"",phone:"",email:"",location:"",status:"Warm",notes:"",interested_in:"",paired_vehicle_stock:""});
-  const [pairModal,setPairModal] = useState(null);
-  const [cMsg,setCMsg]         = useState({t:"",type:""});
-  const [cSearch,setCSearch]   = useState("");
-  const [vSearch,setVSearch]   = useState("");
-  const [poolNote,setPoolNote] = useState("");
+  const [clients, setClients] = useState([]);
+  const [cLoad, setCLoad]   = useState(false);
+  const [selC, setSelC]     = useState(null);
+  const [addC, setAddC]     = useState(false);
+  const [editC, setEditC]   = useState(false);
+  const [cf, setCf]         = useState({name:"",phone:"",email:"",location:"",status:"Warm",notes:"",interested_in:"",paired_vehicle_stock:""});
+  const [pairModal, setPairModal] = useState(null);
+  const [cMsg, setCMsg]     = useState({t:"",type:""});
+  const [cSearch, setCSearch] = useState("");
+  const [vSearch, setVSearch] = useState("");
+
+  // Comm log
+  const [commLog, setCommLog] = useState([]);
+  const [commLoad, setCommLoad] = useState(false);
+  const [logType, setLogType] = useState("note");
+  const [logText, setLogText] = useState("");
+  const [logLoading, setLogLoading] = useState(false);
+
+  // Lead access
+  const [leadAccess, setLeadAccess] = useState([]);
+  const [addingSP2, setAddingSP2] = useState(false);
+  const [sp2Search, setSP2Search] = useState("");
 
   // Pool
-  const [pool,setPool]         = useState([]);
-  const [poolLoad,setPoolLoad] = useState(false);
-  const [poolMsg,setPoolMsg]   = useState({t:"",type:""});
+  const [pool, setPool]     = useState([]);
+  const [poolLoad, setPoolLoad] = useState(false);
+  const [poolNote, setPoolNote] = useState("");
+  const [poolMsg, setPoolMsg] = useState({t:"",type:""});
 
   // Posts
-  const [posts,setPosts]       = useState([]);
-  const [pLoad,setPLoad]       = useState(false);
-  const [draftOpen,setDraftOpen] = useState(false);
-  const [draftV,setDraftV]     = useState(null);
-  const [draftTitle,setDraftTitle] = useState("");
-  const [draftText,setDraftText]   = useState("");
-  const [draftFeat,setDraftFeat]   = useState("");
-  const [draftIntro,setDraftIntro] = useState("");
-  const [draftImg,setDraftImg]     = useState("");
-  const [draftSearch,setDraftSearch] = useState("");
-  const [editPost,setEditPost] = useState(null);
-  const [pMsg,setPMsg]         = useState({t:"",type:""});
+  const [posts, setPosts]   = useState([]);
+  const [pLoad, setPLoad]   = useState(false);
+  const [draftOpen, setDraftOpen] = useState(false);
+  const [draftV, setDraftV] = useState(null);
+  const [draftTitle, setDraftTitle] = useState("");
+  const [draftText, setDraftText]   = useState("");
+  const [draftFeat, setDraftFeat]   = useState("");
+  const [draftIntro, setDraftIntro] = useState("");
+  const [draftImg, setDraftImg]     = useState("");
+  const [draftSearch, setDraftSearch] = useState("");
+  const [editPost, setEditPost] = useState(null);
+  const [pMsg, setPMsg]     = useState({t:"",type:""});
 
-  // Accounts
-  const [users,setUsers]       = useState([]);
-  const [uLoad,setULoad]       = useState(false);
-  const [rf,setRf]             = useState({firstName:"",lastName:"",email:"",location:"",role:"Sales",password:"",confirm:""});
-  const [rErr,setRErr]         = useState("");
-  const [rOk,setROk]           = useState(false);
-  const [rLoad,setRLoad]       = useState(false);
-  const [resetTarget,setResetTarget] = useState(null);
-  const [resetPw,setResetPw]   = useState("");
-  const [resetMsg,setResetMsg] = useState("");
+  // Users / Accounts
+  const [users, setUsers]   = useState([]);
+  const [uLoad, setULoad]   = useState(false);
+  const [rf, setRf]         = useState({firstName:"",lastName:"",email:"",location:"",role:"Sales",password:"",confirm:""});
+  const [rErr, setRErr]     = useState("");
+  const [rOk, setROk]       = useState(false);
+  const [rLoad, setRLoad]   = useState(false);
+  const [resetTarget, setResetTarget] = useState(null);
+  const [resetPw, setResetPw] = useState("");
+  const [resetMsg, setResetMsg] = useState("");
 
-  // Notifs & settings
-  const [notifs,setNotifs]     = useState([]);
-  const [showNotifs,setShowNotifs] = useState(false);
-  const [settingsOpen,setSettingsOpen] = useState(false);
+  // Notifications
+  const [notifs, setNotifs] = useState([]);
+  const [showNotifs, setShowNotifs] = useState(false);
   const notifRef = useRef(null);
 
-  // ── Styles ────────────────────────────────────────────────────
+  // Settings
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [editName, setEditName] = useState({first:"",last:""});
+  const [nameMsg, setNameMsg] = useState("");
+  const [accentInput, setAccentInput] = useState("#E63946");
+
+  // Chat
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMsgs, setChatMsgs] = useState([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoad, setChatLoad] = useState(false);
+  const [unreadChat, setUnreadChat] = useState(0);
+  const chatEndRef = useRef(null);
+  const chatChannelRef = useRef(null);
+
+  // ── Style helpers ────────────────────────────────────────────
   const card  = {background:T.surface,border:`1px solid ${T.border}`,borderRadius:14,padding:20};
   const inp   = {background:T.input,border:`1px solid ${T.inputBorder}`,borderRadius:9,color:T.text,padding:"11px 14px",fontFamily:"'DM Sans',sans-serif",fontSize:13,width:"100%",outline:"none"};
   const btnP  = {background:T.accent,color:"#fff",border:"none",borderRadius:9,padding:"10px 18px",fontFamily:"'DM Sans',sans-serif",fontSize:13,fontWeight:700,cursor:"pointer"};
@@ -179,21 +246,25 @@ function App(){
   const isAdmin   = user?.role==="Admin";
   const isManager = user?.role==="Manager";
 
-  function canSee(c){
-    if(isAdmin) return true;
-    if(isManager) return c.assigned_location===user?.location;
-    return c.created_by===user?.id;
+  function canSee(c) {
+    if (isAdmin) return true;
+    if (isManager) return c.assigned_location === user?.location;
+    if (c.created_by === user?.id) return true;
+    return leadAccess.some(a => a.client_id === c.id && a.user_id === user?.id);
+  }
+  function isOwnerOrSP2(c) {
+    if (isAdmin || isManager) return true;
+    if (c.created_by === user?.id) return true;
+    return leadAccess.some(a => a.client_id === c.id && a.user_id === user?.id && a.can_edit);
   }
 
-  // ── Loaders ───────────────────────────────────────────────────
-  const loadInv = async(force=false)=>{
+  // ── Data loaders ─────────────────────────────────────────────
+  const loadInv = async (force=false) => {
     if(force){setSyncing(true);setSyncMsg({t:"",type:""});}
     else{setInvLoad(true);setInvErr("");}
     try{
-      const r=await fetch(INV_URL);
-      if(!r.ok)throw new Error("API error "+r.status);
-      const j=await r.json();
-      if(!j.success)throw new Error(j.error||"Backend error");
+      const r=await fetch(INV_URL); if(!r.ok)throw new Error("API error "+r.status);
+      const j=await r.json(); if(!j.success)throw new Error(j.error||"Backend error");
       if(!j.vehicles?.length)throw new Error("No vehicles returned.");
       setInv(j.vehicles.map(normalizeV));
       setSynced(new Date().toLocaleTimeString("en-CA",{hour:"2-digit",minute:"2-digit"}));
@@ -206,45 +277,86 @@ function App(){
       if(force)setTimeout(()=>setSyncMsg({t:"",type:""}),5000);
     }
   };
-  const loadClients=async()=>{
+  const loadClients = async () => {
     setCLoad(true);
     const{data}=await sb.from("clients").select("*").order("created_at",{ascending:false});
-    if(data)setClients(data);
-    setCLoad(false);
+    if(data)setClients(data); setCLoad(false);
   };
-  const loadPool=async()=>{
+  const loadPool = async () => {
     setPoolLoad(true);
     const{data}=await sb.from("lead_pool")
       .select("*, client:clients(*), adder:users!lead_pool_added_by_fkey(first_name,last_name,location)")
       .eq("status","available").order("created_at",{ascending:false});
-    if(data)setPool(data);
-    setPoolLoad(false);
+    if(data)setPool(data); setPoolLoad(false);
   };
-  const loadPosts=async()=>{
+  const loadPosts = async () => {
     setPLoad(true);
     const{data}=await sb.from("posts").select("*").order("created_at",{ascending:false});
-    if(data)setPosts(data);
-    setPLoad(false);
+    if(data)setPosts(data); setPLoad(false);
   };
-  const loadUsers=async()=>{
+  const loadUsers = async () => {
     setULoad(true);
     const{data}=await sb.from("users").select("id,email,first_name,last_name,location,role,status,created_at").order("created_at",{ascending:false});
-    if(data)setUsers(data);
-    setULoad(false);
+    if(data)setUsers(data); setULoad(false);
   };
-  const loadNotifs=async()=>{
+  const loadNotifs = async () => {
     if(!user)return;
     const{data}=await sb.from("notifications").select("*").eq("user_id",user.id).order("created_at",{ascending:false}).limit(25);
     if(data)setNotifs(data);
   };
+  const loadCommLog = async (clientId) => {
+    setCommLoad(true);
+    const{data}=await sb.from("comm_log").select("*, author:users(first_name,last_name)").eq("client_id",clientId).order("created_at",{ascending:false});
+    if(data)setCommLog(data); setCommLoad(false);
+  };
+  const loadLeadAccess = async (clientId) => {
+    const{data}=await sb.from("lead_access").select("*, user:users(id,first_name,last_name,location,role)").eq("client_id",clientId);
+    if(data)setLeadAccess(data);
+  };
+  const loadVehiclePhotos = async (stocks) => {
+    if(!stocks.length)return;
+    const{data}=await sb.from("vehicle_photos").select("*").in("stock",stocks);
+    if(data){
+      const map={};
+      data.forEach(p=>{if(!map[p.stock])map[p.stock]=[];map[p.stock].push(p);});
+      setVPhotos(prev=>({...prev,...map}));
+    }
+  };
+
+  // Chat setup
+  const loadChat = async () => {
+    if(!user)return;
+    setChatLoad(true);
+    const since = new Date(Date.now()-24*60*60*1000).toISOString();
+    const{data}=await sb.from("chat_messages").select("*").eq("location",user.location).gte("created_at",since).order("created_at",{ascending:true});
+    if(data)setChatMsgs(data); setChatLoad(false);
+  };
+  const setupChatChannel = useCallback(() => {
+    if(!user)return;
+    if(chatChannelRef.current)sb.removeChannel(chatChannelRef.current);
+    chatChannelRef.current = sb.channel("chat-"+user.location)
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"chat_messages",filter:`location=eq.${user.location}`},(payload)=>{
+        setChatMsgs(prev=>[...prev,payload.new]);
+        if(!chatOpen)setUnreadChat(c=>c+1);
+        setTimeout(()=>chatEndRef.current?.scrollIntoView({behavior:"smooth"}),100);
+      }).subscribe();
+  },[user,chatOpen]);
 
   useEffect(()=>{
     if(screen==="app"){
-      loadInv();loadClients();loadPool();loadPosts();loadUsers();loadNotifs();
+      loadInv();loadClients();loadPool();loadPosts();loadUsers();loadNotifs();loadChat();setupChatChannel();
       const iv=setInterval(()=>{loadNotifs();loadPool();},30000);
-      return()=>clearInterval(iv);
+      return()=>{clearInterval(iv);if(chatChannelRef.current)sb.removeChannel(chatChannelRef.current);};
     }
   },[screen]);
+
+  useEffect(()=>{
+    if(selC){loadCommLog(selC.id);loadLeadAccess(selC.id);}
+  },[selC?.id]);
+
+  useEffect(()=>{
+    if(chatOpen){setUnreadChat(0);setTimeout(()=>chatEndRef.current?.scrollIntoView({behavior:"smooth"}),100);}
+  },[chatOpen]);
 
   useEffect(()=>{
     const h=e=>{if(notifRef.current&&!notifRef.current.contains(e.target))setShowNotifs(false);};
@@ -253,19 +365,23 @@ function App(){
   },[]);
 
   // ── Auth ──────────────────────────────────────────────────────
-  const doLogin=async()=>{
+  const doLogin = async () => {
     setAErr("");setALoad(true);
     const{data,error}=await sb.from("users").select("*").eq("email",lf.email.toLowerCase().trim()).single();
     if(error||!data){setAErr("No account found with that email.");setALoad(false);return;}
     if(data.status==="disabled"){setAErr("Your account has been disabled. Contact your administrator.");setALoad(false);return;}
     if(data.password_hash!==lf.password&&data.temp_password!==lf.password){setAErr("Incorrect password.");setALoad(false);return;}
-    const t=getT(data);setT(t);setThemeKey(data?.theme?.mode||"dark");
+    const savedTheme=data?.theme?.mode||"dark";
+    const savedAccent=data?.theme?.accent||"";
+    let t={...THEMES[savedTheme]||THEMES.dark};
+    if(savedAccent)t={...t,accent:savedAccent};
+    setT(t);setThemeKey(savedTheme);setCustomAccent(savedAccent||t.accent);setAccentInput(savedAccent||t.accent);
     setUser(data);setScreen("app");setALoad(false);
   };
-  const doSignup=async()=>{
+  const doSignup = async () => {
     setAErr("");
     const{firstName,lastName,email,password,confirm,location}=sf;
-    if(!firstName||!lastName||!email||!password||!location){setAErr("Please fill in all required fields.");return;}
+    if(!firstName||!lastName||!email||!password||!location){setAErr("Fill in all required fields.");return;}
     const domain=email.split("@")[1]?.toLowerCase();
     if(!ALLOWED.includes(domain)){setAErr("Only @houseofcars.com and @houseofcarscalgary.com allowed.");return;}
     if(password.length<8){setAErr("Password must be at least 8 characters.");return;}
@@ -278,145 +394,197 @@ function App(){
     setT(THEMES.dark);setUser(data);setScreen("app");setALoad(false);
   };
 
-  // ── Clients ───────────────────────────────────────────────────
-  const saveClient=async()=>{
+  // ── Comm log ──────────────────────────────────────────────────
+  const addLog = async () => {
+    if(!logText.trim()||!selC)return;
+    setLogLoading(true);
+    const{data,error}=await sb.from("comm_log").insert({client_id:selC.id,user_id:user.id,type:logType,content:logText}).select("*, author:users(first_name,last_name)").single();
+    if(!error&&data){setCommLog(p=>[data,...p]);setLogText("");}
+    setLogLoading(false);
+  };
+
+  // ── Clients CRUD ──────────────────────────────────────────────
+  const saveClient = async () => {
     if(!cf.name){setCMsg({t:"Name is required.",type:"error"});return;}
     const{data,error}=await sb.from("clients").insert({...cf,created_by:user.id,assigned_location:user.location,last_contact:new Date().toISOString()}).select().single();
     if(error){setCMsg({t:"Error: "+error.message,type:"error"});return;}
+    await sb.from("comm_log").insert({client_id:data.id,user_id:user.id,type:"system",content:"Lead created by "+user.first_name+" "+user.last_name});
     setClients(p=>[data,...p]);setAddC(false);
     setCf({name:"",phone:"",email:"",location:"",status:"Warm",notes:"",interested_in:"",paired_vehicle_stock:""});
     setCMsg({t:"✅ Client saved!",type:"success"});setTimeout(()=>setCMsg({t:"",type:""}),3000);
   };
-  const updateClient=async()=>{
+  const updateClient = async () => {
+    const prev=selC;
     const{data,error}=await sb.from("clients").update(cf).eq("id",selC.id).select().single();
     if(error){setCMsg({t:"Error: "+error.message,type:"error"});return;}
+    if(prev.status!==cf.status){
+      await sb.from("comm_log").insert({client_id:data.id,user_id:user.id,type:"status",content:`Status changed from "${prev.status}" to "${cf.status}"`});
+    }
     setClients(p=>p.map(c=>c.id===data.id?data:c));setSelC(data);setEditC(false);
+    loadCommLog(data.id);
     setCMsg({t:"✅ Updated!",type:"success"});setTimeout(()=>setCMsg({t:"",type:""}),3000);
   };
-  const deleteClient=async(id)=>{
+  const deleteClient = async (id) => {
     if(!window.confirm("Delete this client? Cannot be undone."))return;
     await sb.from("clients").delete().eq("id",id);
     setClients(p=>p.filter(c=>c.id!==id));setSelC(null);
   };
-  const pairVehicle=async(client,vehicle)=>{
+  const pairVehicle = async (client,vehicle) => {
     const{data,error}=await sb.from("clients").update({interested_in:vehicle.year+" "+vehicle.make+" "+vehicle.model,paired_vehicle_stock:vehicle.stock}).eq("id",client.id).select().single();
-    if(!error&&data){setClients(p=>p.map(c=>c.id===data.id?data:c));setSelC(data);}
+    if(!error&&data){
+      setClients(p=>p.map(c=>c.id===data.id?data:c));setSelC(data);
+      await sb.from("comm_log").insert({client_id:data.id,user_id:user.id,type:"note",content:`Paired vehicle: ${vehicle.year} ${vehicle.make} ${vehicle.model} (Stock #${vehicle.stock})`});
+      loadCommLog(data.id);
+    }
     setPairModal(null);setVSearch("");
   };
 
+  // ── Lead Access (SP2) ─────────────────────────────────────────
+  const addSP2 = async (targetUser) => {
+    const{error}=await sb.from("lead_access").upsert({client_id:selC.id,user_id:targetUser.id,can_edit:true});
+    if(!error){
+      await sb.from("comm_log").insert({client_id:selC.id,user_id:user.id,type:"system",content:`${user.first_name} added ${targetUser.first_name} ${targetUser.last_name} as Sales Person 2`});
+      await sb.from("notifications").insert({user_id:targetUser.id,message:`${user.first_name} ${user.last_name} added you as Sales Person 2 on lead: ${selC.name}`,link_tab:"clients",read:false});
+      loadLeadAccess(selC.id);loadCommLog(selC.id);
+    }
+    setAddingSP2(false);setSP2Search("");
+  };
+  const removeSP2 = async (accessId,uName) => {
+    await sb.from("lead_access").delete().eq("id",accessId);
+    await sb.from("comm_log").insert({client_id:selC.id,user_id:user.id,type:"system",content:`Removed ${uName} as Sales Person 2`});
+    loadLeadAccess(selC.id);loadCommLog(selC.id);
+  };
+
   // ── Lead Pool ─────────────────────────────────────────────────
-  const addToPool=async(client)=>{
-    if(!window.confirm("Add '"+client.name+"' to the Lead Pool? Other reps will be notified."))return;
+  const addToPool = async (client) => {
+    if(!window.confirm("Add '"+client.name+"' to the Lead Pool?"))return;
     const{error}=await sb.from("lead_pool").insert({client_id:client.id,added_by:user.id,note:poolNote,status:"available"});
     if(error){setPoolMsg({t:"Error: "+error.message,type:"error"});return;}
+    await sb.from("comm_log").insert({client_id:client.id,user_id:user.id,type:"system",content:`Added to Lead Pool${poolNote?" — Note: "+poolNote:""}`});
     const others=users.filter(u=>u.id!==user.id&&u.status==="active");
-    if(others.length>0){
-      await sb.from("notifications").insert(others.map(u=>({
-        user_id:u.id,
-        message:`🔔 ${user.first_name} ${user.last_name} needs help with lead: ${client.name}. Check the Lead Pool!`,
-        link_tab:"pool",read:false
-      })));
-    }
-    setPoolNote("");
-    setPoolMsg({t:"✅ Added to Lead Pool! "+others.length+" reps notified.",type:"success"});
+    if(others.length>0)await sb.from("notifications").insert(others.map(u=>({user_id:u.id,message:`🔔 ${user.first_name} needs help with: ${client.name}. Check Lead Pool!`,link_tab:"pool",read:false})));
+    setPoolNote("");setPoolMsg({t:"✅ Added! "+others.length+" reps notified.",type:"success"});
     setTimeout(()=>setPoolMsg({t:"",type:""}),4000);
-    loadPool();
+    loadPool();loadCommLog(client.id);
   };
-  const claimFromPool=async(item)=>{
+  const claimFromPool = async (item) => {
     await sb.from("lead_pool").update({status:"claimed",claimed_by:user.id}).eq("id",item.id);
     await sb.from("clients").update({created_by:user.id,assigned_location:user.location}).eq("id",item.client_id);
-    await sb.from("notifications").insert({user_id:item.added_by,message:`✅ ${user.first_name} ${user.last_name} claimed your lead: ${item.client?.name}`,link_tab:"clients",read:false});
+    await sb.from("notifications").insert({user_id:item.added_by,message:`✅ ${user.first_name} claimed your lead: ${item.client?.name}`,link_tab:"clients",read:false});
     loadPool();loadClients();
   };
 
   // ── Ad Drafts ─────────────────────────────────────────────────
-  const openDraft=(vehicle=null,post=null)=>{
-    if(post){
-      setEditPost(post);setDraftTitle(post.vehicle_title||"");setDraftText(post.draft_text||"");
-      setDraftImg(post.vehicle_image||"");setDraftFeat("");setDraftIntro("");
-      setDraftV(inv.find(v=>v.stock===post.vehicle_stock)||null);
-    }else{
-      setEditPost(null);setDraftV(vehicle);setDraftFeat("");setDraftIntro("");
-      if(vehicle){setDraftTitle(vehicle.year+" "+vehicle.make+" "+vehicle.model);setDraftImg(vehicle.image||"");setDraftText(buildAd(vehicle));}
+  const openDraft = (vehicle=null,post=null) => {
+    if(post){setEditPost(post);setDraftTitle(post.vehicle_title||"");setDraftText(post.draft_text||"");setDraftImg(post.vehicle_image||"");setDraftFeat("");setDraftIntro("");setDraftV(inv.find(v=>v.stock===post.vehicle_stock)||null);}
+    else{setEditPost(null);setDraftV(vehicle);setDraftFeat("");setDraftIntro("");
+      if(vehicle){setDraftTitle(vehicle.year+" "+vehicle.make+" "+vehicle.model);setDraftImg(vehicle.image||"");setDraftText(buildAd(vehicle,"",""));}
       else{setDraftTitle("");setDraftText("");setDraftImg("");}
     }
     setDraftSearch("");setDraftOpen(true);
   };
-  const saveDraft=async(status="Draft")=>{
-    if(!draftText){setPMsg({t:"Please write your ad text first.",type:"error"});return;}
+  const saveDraft = async (status="Draft") => {
+    if(!draftText){setPMsg({t:"Write your ad text first.",type:"error"});return;}
     const payload={vehicle_stock:draftV?.stock||null,vehicle_title:draftTitle,draft_text:draftText,vehicle_image:draftImg||draftV?.image||"",status,created_by:user.id,posted_at:status==="Posted"?new Date().toISOString():null};
-    if(editPost){
-      const{data,error}=await sb.from("posts").update(payload).eq("id",editPost.id).select().single();
-      if(error){setPMsg({t:"Error: "+error.message,type:"error"});return;}
-      setPosts(p=>p.map(x=>x.id===data.id?data:x));
-    }else{
-      const{data,error}=await sb.from("posts").insert(payload).select().single();
-      if(error){setPMsg({t:"Error: "+error.message,type:"error"});return;}
-      setPosts(p=>[data,...p]);
-    }
-    setDraftOpen(false);
-    setPMsg({t:status==="Draft"?"✅ Draft saved!":"✅ Marked as posted!",type:"success"});
-    setTimeout(()=>setPMsg({t:"",type:""}),4000);
+    if(editPost){const{data,error}=await sb.from("posts").update(payload).eq("id",editPost.id).select().single();if(error){setPMsg({t:"Error: "+error.message,type:"error"});return;}setPosts(p=>p.map(x=>x.id===data.id?data:x));}
+    else{const{data,error}=await sb.from("posts").insert(payload).select().single();if(error){setPMsg({t:"Error: "+error.message,type:"error"});return;}setPosts(p=>[data,...p]);}
+    setDraftOpen(false);setPMsg({t:status==="Draft"?"✅ Draft saved!":"✅ Posted!",type:"success"});setTimeout(()=>setPMsg({t:"",type:""}),4000);
   };
-  const openMarketplace=()=>{
+  const openMarketplace = () => {
     navigator.clipboard.writeText(draftText).catch(()=>{});
     window.open("https://www.facebook.com/marketplace/create/vehicle","_blank");
     saveDraft("Posted");
   };
-  const deletePost=async(id)=>{
-    if(!window.confirm("Delete this draft?"))return;
-    await sb.from("posts").delete().eq("id",id);
-    setPosts(p=>p.filter(x=>x.id!==id));
+
+  // ── Vehicle photo upload ──────────────────────────────────────
+  const handlePhotoUpload = async (e, stock) => {
+    const files = Array.from(e.target.files);
+    if(!files.length)return;
+    setPhotoUploading(true);
+    try{
+      const urls=[];
+      for(const file of files){
+        // store directly in Supabase DB as URL after manual upload simulation
+        // Since storage bucket may not exist, store the data URL for now
+        const reader=new FileReader();
+        const dataUrl=await new Promise(r=>{reader.onload=ev=>r(ev.target.result);reader.readAsDataURL(file);});
+        const{data,error}=await sb.from("vehicle_photos").insert({stock,url:dataUrl,uploaded_by:user.id}).select().single();
+        if(!error&&data)urls.push(data);
+      }
+      setVPhotos(prev=>{
+        const existing=prev[stock]||[];
+        return{...prev,[stock]:[...existing,...urls]};
+      });
+    }catch(err){console.error(err);}
+    setPhotoUploading(false);
+    e.target.value="";
   };
 
-  // ── User Management ───────────────────────────────────────────
-  const doRegister=async()=>{
+  // ── User management ───────────────────────────────────────────
+  const doRegister = async () => {
     setRErr("");setROk(false);
     const{firstName,lastName,email,password,confirm,location}=rf;
-    if(!firstName||!lastName||!email||!password||!location){setRErr("Please fill in all required fields.");return;}
+    if(!firstName||!lastName||!email||!password||!location){setRErr("Fill in all required fields.");return;}
     const domain=email.split("@")[1]?.toLowerCase();
-    if(!ALLOWED.includes(domain)){setRErr("Only @houseofcars.com and @houseofcarscalgary.com allowed.");return;}
-    if(password.length<8){setRErr("Password must be at least 8 chars.");return;}
+    if(!ALLOWED.includes(domain)){setRErr("Only @houseofcars.com and @houseofcarscalgary.com.");return;}
+    if(password.length<8){setRErr("Password must be 8+ chars.");return;}
     if(password!==confirm){setRErr("Passwords do not match.");return;}
     setRLoad(true);
     const{data:ex}=await sb.from("users").select("id").eq("email",email.toLowerCase()).single();
-    if(ex){setRErr("An account with this email already exists.");setRLoad(false);return;}
+    if(ex){setRErr("Email already exists.");setRLoad(false);return;}
     const{error}=await sb.from("users").insert({email:email.toLowerCase().trim(),first_name:firstName,last_name:lastName,location,role:rf.role,password_hash:password,status:"active"});
     if(error){setRErr("Error: "+error.message);setRLoad(false);return;}
-    setROk(true);setRLoad(false);
-    setRf({firstName:"",lastName:"",email:"",location:"",role:"Sales",password:"",confirm:""});
-    loadUsers();
+    setROk(true);setRLoad(false);setRf({firstName:"",lastName:"",email:"",location:"",role:"Sales",password:"",confirm:""});loadUsers();
   };
-  const toggleStatus=async(u)=>{
+  const toggleStatus = async (u) => {
     const ns=u.status==="active"?"disabled":"active";
     if(!window.confirm(`${ns==="disabled"?"Disable":"Enable"} ${u.first_name}'s account?`))return;
     await sb.from("users").update({status:ns}).eq("id",u.id);
     setUsers(p=>p.map(x=>x.id===u.id?{...x,status:ns}:x));
   };
-  const doResetPw=async()=>{
-    if(!resetPw||resetPw.length<8){setResetMsg("Password must be at least 8 characters.");return;}
+  const doResetPw = async () => {
+    if(!resetPw||resetPw.length<8){setResetMsg("Min 8 characters.");return;}
     await sb.from("users").update({password_hash:resetPw,temp_password:resetPw}).eq("id",resetTarget.id);
-    setResetMsg("✅ Password reset! Tell "+resetTarget.first_name+" their new password.");
+    setResetMsg("✅ Password reset for "+resetTarget.first_name+"!");
     setTimeout(()=>{setResetTarget(null);setResetPw("");setResetMsg("");},3000);
+  };
+  const saveProfile = async () => {
+    if(!editName.first&&!editName.last){setNameMsg("Enter a name to update.");return;}
+    const updates={};
+    if(editName.first)updates.first_name=editName.first;
+    if(editName.last)updates.last_name=editName.last;
+    await sb.from("users").update(updates).eq("id",user.id);
+    setUser(p=>({...p,...updates}));
+    setNameMsg("✅ Name updated!");setTimeout(()=>setNameMsg(""),3000);
   };
 
   // ── Notifications ─────────────────────────────────────────────
-  const markRead=async(id)=>{
+  const markRead = async (id) => {
     await sb.from("notifications").update({read:true}).eq("id",id);
     setNotifs(p=>p.map(n=>n.id===id?{...n,read:true}:n));
   };
-  const markAllRead=async()=>{
+  const markAllRead = async () => {
     await sb.from("notifications").update({read:true}).eq("user_id",user.id);
     setNotifs(p=>p.map(n=>({...n,read:true})));
   };
 
   // ── Theme ─────────────────────────────────────────────────────
-  const saveTheme=async(key)=>{
-    setThemeKey(key);setT(THEMES[key]);
-    await sb.from("users").update({theme:{mode:key}}).eq("id",user.id);
+  const applyTheme = async (key, accent) => {
+    const base={...THEMES[key]||THEMES.dark};
+    if(accent&&accent!==base.accent)base.accent=accent;
+    setT(base);setThemeKey(key);setCustomAccent(accent||base.accent);
+    await sb.from("users").update({theme:{mode:key,accent:accent||""}}).eq("id",user.id);
   };
 
-  // ── Inventory filter/sort ─────────────────────────────────────
+  // ── Chat ──────────────────────────────────────────────────────
+  const sendChat = async () => {
+    if(!chatInput.trim())return;
+    const msg={location:user.location,user_id:user.id,user_name:user.first_name+" "+user.last_name,message:chatInput.trim()};
+    setChatInput("");
+    await sb.from("chat_messages").insert(msg);
+  };
+
+  // ── Inventory filters ─────────────────────────────────────────
   const invTypes=["All",...Array.from(new Set(inv.map(v=>v.type).filter(Boolean))).sort()];
   const invLocs=["All",...Array.from(new Set(inv.map(v=>v.location).filter(Boolean))).sort()];
   const filtInv=useMemo(()=>{
@@ -430,7 +598,7 @@ function App(){
   const toggleSort=col=>setISort(s=>({col,dir:s.col===col&&s.dir==="asc"?"desc":"asc"}));
   const arr=col=>iSort.col===col?(iSort.dir==="asc"?" ↑":" ↓"):" ↕";
 
-  const visC=useMemo(()=>clients.filter(c=>canSee(c)),[clients,user]);
+  const visC=useMemo(()=>clients.filter(c=>canSee(c)),[clients,user,leadAccess]);
   const filtC=useMemo(()=>{
     if(!cSearch)return visC;
     const q=cSearch.toLowerCase();
@@ -440,24 +608,26 @@ function App(){
   const srchV=useMemo(()=>{
     const q=(vSearch||draftSearch).toLowerCase();
     if(!q)return inv.slice(0,20);
-    return inv.filter(v=>(v.make+" "+v.model+" "+v.year+" "+v.stock+" "+v.location).toLowerCase().includes(q)).slice(0,25);
+    // prioritize exact stock match
+    const exact=inv.filter(v=>v.stock.toLowerCase()===q);
+    const rest=inv.filter(v=>v.stock.toLowerCase()!==q&&(v.make+" "+v.model+" "+v.year+" "+v.stock+" "+v.location).toLowerCase().includes(q));
+    return [...exact,...rest].slice(0,25);
   },[inv,vSearch,draftSearch]);
 
   const unread=notifs.filter(n=>!n.read).length;
+  const onlineLoc=users.filter(u=>u.location===user?.location&&u.id!==user?.id&&u.status==="active");
 
-  // ═══════════════════════════════════════════════
-  // AUTH
-  // ═══════════════════════════════════════════════
+  // ── AUTH screen ───────────────────────────────────────────────
   if(screen!=="app") return(
-    <div className="auth-bg" style={{background:"radial-gradient(ellipse at 20% 50%,rgba(230,57,70,.15) 0%,transparent 60%),#0A0A0F"}}>
-      <div className="auth-box fu" style={{background:"#111118",border:"1px solid #1E1E2A"}}>
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,background:"radial-gradient(ellipse at 20% 50%,rgba(230,57,70,.15) 0%,transparent 60%),#0A0A0F"}}>
+      <div className="fu" style={{background:"#111118",border:"1px solid #1E1E2A",borderRadius:22,padding:"40px 36px",width:420,maxWidth:"100%"}}>
         <div style={{textAlign:"center",marginBottom:28}}>
           <div style={{width:52,height:52,background:"#E63946",borderRadius:14,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:26,marginBottom:10}}>🚗</div>
           <div style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:3,color:"#E8E8F0"}}>HOUSE OF CARS</div>
           <div style={{fontSize:11,color:"#E63946",fontWeight:700,letterSpacing:2,marginTop:2}}>CRM COMPANION</div>
         </div>
         {aErr&&<div style={{...nErr,marginBottom:16}}>⚠️ {aErr}</div>}
-        {aMsg&&<div style={{...nOk,marginBottom:16}}>✅ {aMsg}</div>}
+        {aMsg&&<div style={{...nOk,marginBottom:16}}>{aMsg}</div>}
 
         {screen==="login"&&<>
           <div style={{fontSize:20,fontWeight:700,marginBottom:18,color:"#E8E8F0"}}>Welcome back</div>
@@ -477,23 +647,21 @@ function App(){
             </button>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:12,margin:"18px 0",color:"#333",fontSize:12}}><div style={{flex:1,height:1,background:"#1E1E2A"}}></div>or<div style={{flex:1,height:1,background:"#1E1E2A"}}></div></div>
-          <button onClick={()=>{setScreen("signup");setAErr("");}} style={{width:"100%",background:"none",border:"1px solid #252535",borderRadius:9,padding:"10px",color:"#aaa",fontSize:13,cursor:"pointer",fontFamily:"'DM Sans'"}}>Create a new account</button>
-          <p style={{textAlign:"center",fontSize:11,color:"#2a2a38",marginTop:14}}>House of Cars staff only</p>
+          <button onClick={()=>{setScreen("signup");setAErr("");}} style={{width:"100%",background:"none",border:"1px solid #252535",borderRadius:9,padding:10,color:"#aaa",fontSize:13,cursor:"pointer",fontFamily:"'DM Sans'"}}>Create a new account</button>
         </>}
 
         {screen==="signup"&&<>
           <div style={{fontSize:20,fontWeight:700,marginBottom:4,color:"#E8E8F0"}}>Create your account</div>
           <p style={{fontSize:12,color:"#555",marginBottom:18}}>@houseofcars.com and @houseofcarscalgary.com only.</p>
-          <div style={{display:"grid",gap:11}}>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-              <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>First Name *</div><input style={{...inp,background:"#16161f",border:"1px solid #252535",color:"#E8E8F0"}} placeholder="First" value={sf.firstName} onChange={e=>{setSf(p=>({...p,firstName:e.target.value}));setAErr("");}}/></div>
-              <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Last Name *</div><input style={{...inp,background:"#16161f",border:"1px solid #252535",color:"#E8E8F0"}} placeholder="Last" value={sf.lastName} onChange={e=>{setSf(p=>({...p,lastName:e.target.value}));setAErr("");}}/></div>
+          <div style={{display:"grid",gap:10}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
+              <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>First Name *</div><input style={{...inp,background:"#16161f",border:"1px solid #252535",color:"#E8E8F0"}} value={sf.firstName} onChange={e=>{setSf(p=>({...p,firstName:e.target.value}));setAErr("");}}/></div>
+              <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Last Name *</div><input style={{...inp,background:"#16161f",border:"1px solid #252535",color:"#E8E8F0"}} value={sf.lastName} onChange={e=>{setSf(p=>({...p,lastName:e.target.value}));setAErr("");}}/></div>
             </div>
             <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Work Email *</div><input style={{...inp,background:"#16161f",border:"1px solid #252535",color:"#E8E8F0"}} placeholder="name@houseofcars.com" value={sf.email} onChange={e=>{setSf(p=>({...p,email:e.target.value}));setAErr("");}}/></div>
             <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Location *</div>
               <select style={{...inp,background:"#16161f",border:"1px solid #252535",color:"#E8E8F0"}} value={sf.location} onChange={e=>setSf(p=>({...p,location:e.target.value}))}>
-                <option value="">Select location…</option>
-                {LOCS.map(l=><option key={l} value={l}>{l}</option>)}
+                <option value="">Select…</option>{LOCS.map(l=><option key={l} value={l}>{l}</option>)}
               </select>
             </div>
             <div><div style={{fontSize:11,color:"#555",marginBottom:5}}>Role</div>
@@ -503,13 +671,8 @@ function App(){
                 ))}
               </div>
             </div>
-            <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Password *</div>
-              <div style={{position:"relative"}}>
-                <input style={{...inp,background:"#16161f",border:"1px solid #252535",color:"#E8E8F0",paddingRight:42}} type={showPw?"text":"password"} placeholder="Min. 8 chars" value={sf.password} onChange={e=>setSf(p=>({...p,password:e.target.value}))}/>
-                <button onClick={()=>setShowPw(s=>!s)} style={{position:"absolute",right:11,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"#555",cursor:"pointer",fontSize:14}}>{showPw?"🙈":"👁️"}</button>
-              </div>
-            </div>
-            <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Confirm *</div><input style={{...inp,background:"#16161f",border:"1px solid #252535",color:"#E8E8F0"}} type={showPw?"text":"password"} placeholder="Repeat" value={sf.confirm} onChange={e=>setSf(p=>({...p,confirm:e.target.value}))}/></div>
+            <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Password *</div><input style={{...inp,background:"#16161f",border:"1px solid #252535",color:"#E8E8F0"}} type="password" placeholder="Min. 8 chars" value={sf.password} onChange={e=>setSf(p=>({...p,password:e.target.value}))}/></div>
+            <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Confirm *</div><input style={{...inp,background:"#16161f",border:"1px solid #252535",color:"#E8E8F0"}} type="password" placeholder="Repeat" value={sf.confirm} onChange={e=>setSf(p=>({...p,confirm:e.target.value}))}/></div>
             <button style={{...btnP,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8}} onClick={doSignup} disabled={aLoad}>
               {aLoad?<><span className="spin"></span>Creating…</>:"Create Account"}
             </button>
@@ -519,20 +682,20 @@ function App(){
 
         {screen==="forgot"&&<>
           <div style={{fontSize:20,fontWeight:700,marginBottom:6,color:"#E8E8F0"}}>Reset your password</div>
-          <p style={{fontSize:13,color:"#555",marginBottom:20,lineHeight:1.6}}>Enter your email below. Your administrator will reset your password in the Accounts tab.</p>
+          <p style={{fontSize:13,color:"#555",marginBottom:20,lineHeight:1.6}}>Your administrator resets passwords in the Accounts tab. Enter your email to identify yourself.</p>
           <div style={{display:"grid",gap:12}}>
-            <div><div style={{fontSize:11,color:"#555",marginBottom:4}}>Work Email</div><input style={{...inp,background:"#16161f",border:"1px solid #252535",color:"#E8E8F0"}} placeholder="name@houseofcars.com" value={fgEmail} onChange={e=>{setFgEmail(e.target.value);setAErr("");setAMsg("");}}/></div>
-            <button style={{...btnP,width:"100%"}} onClick={()=>{if(!fgEmail){setAErr("Please enter your email.");return;}setAMsg("Request sent! Your administrator will reset your password in the Accounts tab shortly.");}}>Send Request</button>
+            <input style={{...inp,background:"#16161f",border:"1px solid #252535",color:"#E8E8F0"}} placeholder="name@houseofcars.com" value={fgEmail} onChange={e=>{setFgEmail(e.target.value);setAErr("");setAMsg("");}}/>
+            <button style={{...btnP,width:"100%"}} onClick={()=>{if(!fgEmail){setAErr("Enter your email.");return;}setAMsg("✅ Request noted — ask your Admin to reset your password in the Accounts tab.");}}>Submit Request</button>
           </div>
-          <button onClick={()=>{setScreen("login");setAErr("");setAMsg("");}} style={{width:"100%",background:"none",border:"none",color:"#555",fontSize:13,cursor:"pointer",marginTop:14,fontFamily:"'DM Sans'"}}>← Back to Sign In</button>
+          <button onClick={()=>{setScreen("login");setAErr("");setAMsg("");}} style={{width:"100%",background:"none",border:"none",color:"#555",fontSize:13,cursor:"pointer",marginTop:14,fontFamily:"'DM Sans'"}}>← Back</button>
         </>}
       </div>
     </div>
   );
 
-  // ═══════════════════════════════════════════════
+  // ══════════════════════════════════════════════
   // MAIN APP
-  // ═══════════════════════════════════════════════
+  // ══════════════════════════════════════════════
   const TABS=[
     {id:"dashboard",label:"Dashboard",icon:"⬛"},
     {id:"clients",  label:"Clients",  icon:"👥",badge:visC.length},
@@ -545,37 +708,38 @@ function App(){
   return(
     <div style={{fontFamily:"'DM Sans',sans-serif",background:T.bg,minHeight:"100vh",color:T.text,display:"flex",flexDirection:"column"}}>
 
-      {/* Header */}
-      <div style={{background:T.nav,borderBottom:`1px solid ${T.border}`,padding:"0 20px",display:"flex",alignItems:"center",justifyContent:"space-between",height:56,flexShrink:0}}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <div style={{background:T.accent,width:30,height:30,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15}}>🚗</div>
-          <span style={{fontFamily:"'Bebas Neue'",fontSize:20,letterSpacing:2,color:T.text}}>HOUSE OF CARS</span>
-          <span style={{color:T.accent,fontSize:10,fontWeight:700,background:T.accent+"22",padding:"2px 8px",borderRadius:4,border:`1px solid ${T.accent}44`,marginLeft:2}}>CRM</span>
+      {/* ── Header ── */}
+      <div style={{background:T.nav,borderBottom:`1px solid ${T.border}`,padding:"0 16px",display:"flex",alignItems:"center",justifyContent:"space-between",height:52,flexShrink:0}}>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <div style={{background:T.accent,width:28,height:28,borderRadius:7,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>🚗</div>
+          <span style={{fontFamily:"'Bebas Neue'",fontSize:18,letterSpacing:2,color:T.text}} className="desktop-only">HOUSE OF CARS</span>
+          <span style={{color:T.accent,fontSize:10,fontWeight:700,background:T.accent+"22",padding:"2px 7px",borderRadius:4,border:`1px solid ${T.accent}44`}}>CRM</span>
         </div>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          {synced&&<span style={{fontSize:11,color:T.muted}}>Synced {synced}</span>}
-          {invLoad&&<span style={{fontSize:11,color:"#FF9500",display:"flex",alignItems:"center",gap:5}}><span className="spin" style={{width:11,height:11,borderTopColor:"#FF9500",borderColor:"rgba(255,149,0,.2)"}}></span>Loading…</span>}
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          {synced&&<span style={{fontSize:10,color:T.muted}} className="desktop-only">Synced {synced}</span>}
+
+          {/* Chat button */}
+          <button onClick={()=>setChatOpen(s=>!s)} style={{background:"none",border:"none",cursor:"pointer",fontSize:16,color:T.text,padding:4,position:"relative",display:"flex",alignItems:"center"}}>
+            💬{unreadChat>0&&<span style={{position:"absolute",top:0,right:0,width:14,height:14,borderRadius:"50%",background:T.accent,color:"#fff",fontSize:8,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>{unreadChat}</span>}
+          </button>
 
           {/* Bell */}
           <div ref={notifRef} style={{position:"relative"}}>
-            <button onClick={()=>setShowNotifs(s=>!s)} style={{background:"none",border:"none",cursor:"pointer",fontSize:18,color:T.text,display:"flex",alignItems:"center",padding:4,position:"relative"}}>
-              🔔{unread>0&&<span style={{position:"absolute",top:0,right:0,width:16,height:16,borderRadius:"50%",background:"#E63946",color:"#fff",fontSize:9,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>{unread}</span>}
+            <button onClick={()=>setShowNotifs(s=>!s)} style={{background:"none",border:"none",cursor:"pointer",fontSize:16,color:T.text,padding:4,position:"relative",display:"flex",alignItems:"center"}}>
+              🔔{unread>0&&<span style={{position:"absolute",top:0,right:0,width:14,height:14,borderRadius:"50%",background:"#E63946",color:"#fff",fontSize:8,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>{unread}</span>}
             </button>
             {showNotifs&&(
-              <div style={{position:"absolute",right:0,top:38,width:340,background:T.surface,border:`1px solid ${T.border}`,borderRadius:14,boxShadow:"0 8px 32px rgba(0,0,0,.4)",zIndex:999}}>
+              <div style={{position:"absolute",right:0,top:36,width:320,background:T.surface,border:`1px solid ${T.border}`,borderRadius:14,boxShadow:"0 8px 32px rgba(0,0,0,.5)",zIndex:999}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 16px",borderBottom:`1px solid ${T.border}`}}>
                   <span style={{fontSize:13,fontWeight:700,color:T.text}}>Notifications</span>
                   {unread>0&&<button onClick={markAllRead} style={{background:"none",border:"none",color:T.accent,fontSize:11,cursor:"pointer",fontFamily:"'DM Sans'"}}>Mark all read</button>}
                 </div>
-                <div style={{maxHeight:300,overflowY:"auto"}}>
-                  {notifs.length===0&&<div style={{padding:20,color:T.muted,fontSize:13,textAlign:"center"}}>No notifications yet.</div>}
+                <div style={{maxHeight:280,overflowY:"auto"}}>
+                  {notifs.length===0&&<div style={{padding:20,color:T.muted,fontSize:13,textAlign:"center"}}>No notifications</div>}
                   {notifs.map(n=>(
-                    <div key={n.id} onClick={()=>{markRead(n.id);if(n.link_tab){setTab(n.link_tab);setShowNotifs(false);}}} style={{padding:"11px 16px",borderBottom:`1px solid ${T.border}`,cursor:"pointer",background:n.read?"transparent":T.accent+"11",display:"flex",gap:10,alignItems:"flex-start"}}>
-                      {!n.read&&<div style={{width:7,height:7,borderRadius:"50%",background:T.accent,marginTop:5,flexShrink:0}}></div>}
-                      <div style={{flex:1}}>
-                        <div style={{fontSize:12,color:T.text,lineHeight:1.5}}>{n.message}</div>
-                        <div style={{fontSize:10,color:T.muted,marginTop:3}}>{fmtDate(n.created_at)}</div>
-                      </div>
+                    <div key={n.id} onClick={()=>{markRead(n.id);if(n.link_tab){setTab(n.link_tab);setShowNotifs(false);}}} style={{padding:"10px 16px",borderBottom:`1px solid ${T.border}`,cursor:"pointer",background:n.read?"transparent":T.accent+"11",display:"flex",gap:8,alignItems:"flex-start"}}>
+                      {!n.read&&<div style={{width:6,height:6,borderRadius:"50%",background:T.accent,marginTop:5,flexShrink:0}}></div>}
+                      <div style={{flex:1}}><div style={{fontSize:12,color:T.text,lineHeight:1.5}}>{n.message}</div><div style={{fontSize:10,color:T.muted,marginTop:2}}>{fmtTime(n.created_at)}</div></div>
                     </div>
                   ))}
                 </div>
@@ -583,73 +747,61 @@ function App(){
             )}
           </div>
 
-          <span style={{fontSize:12,color:T.muted}}>{user?.first_name} {user?.last_name}</span>
-          <div style={{width:30,height:30,borderRadius:"50%",background:`linear-gradient(135deg,${T.accent},${T.accent}99)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"#fff",flexShrink:0}}>
+          <span style={{fontSize:11,color:T.muted}} className="desktop-only">{user?.first_name} {user?.last_name}</span>
+          <div style={{width:28,height:28,borderRadius:"50%",background:`linear-gradient(135deg,${T.accent},${T.accent}99)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff",flexShrink:0}}>
             {(user?.first_name?.[0]||"")+(user?.last_name?.[0]||"")}
           </div>
-          <button onClick={()=>setSettingsOpen(true)} style={{background:"none",border:"none",cursor:"pointer",fontSize:16,color:T.muted,padding:4}} title="Settings">⚙️</button>
-          <button style={{...btnS,fontSize:11}} onClick={()=>{setScreen("login");setUser(null);setInv([]);setClients([]);setPosts([]);}}>Sign Out</button>
+          <button onClick={()=>{setEditName({first:user?.first_name||"",last:user?.last_name||""});setSettingsOpen(true);}} style={{background:"none",border:"none",cursor:"pointer",fontSize:15,color:T.muted,padding:2}}>⚙️</button>
+          <button style={{...btnS,fontSize:11,padding:"5px 10px"}} onClick={()=>{setScreen("login");setUser(null);setInv([]);setClients([]);setPosts([]);}}>Out</button>
         </div>
       </div>
 
-      {/* Nav */}
-      <div style={{background:T.nav,borderBottom:`1px solid ${T.border}`,padding:"0 14px",display:"flex",gap:2,flexShrink:0,overflowX:"auto"}}>
+      {/* ── Nav ── */}
+      <div style={{background:T.nav,borderBottom:`1px solid ${T.border}`,padding:"0 10px",display:"flex",gap:1,flexShrink:0,overflowX:"auto"}}>
         {TABS.map(t=>(
-          <button key={t.id} style={{background:tab===t.id?"rgba(128,128,128,.15)":"none",border:"none",cursor:"pointer",padding:"10px 14px",fontFamily:"'DM Sans',sans-serif",fontSize:13,fontWeight:500,borderRadius:8,transition:"all .2s",display:"flex",alignItems:"center",gap:6,whiteSpace:"nowrap",color:tab===t.id?T.text:T.muted}} onClick={()=>setTab(t.id)}>
-            {t.icon} {t.label}
-            {t.badge>0&&<span style={{background:T.accent+"33",color:t.bc||T.accent,fontSize:10,fontWeight:700,padding:"1px 7px",borderRadius:10,marginLeft:2}}>{t.badge}</span>}
+          <button key={t.id} className="tab-btn" style={{color:tab===t.id?T.text:T.muted,background:tab===t.id?"rgba(128,128,128,.15)":"none"}} onClick={()=>setTab(t.id)}>
+            <span>{t.icon}</span>
+            <span className="desktop-only">{t.label}</span>
+            {t.badge>0&&<span style={{background:T.accent+"33",color:t.bc||T.accent,fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:8}}>{t.badge}</span>}
           </button>
         ))}
       </div>
 
-      {/* Content */}
-      <div style={{flex:1,overflowY:"auto",padding:20}}>
+      {/* ── Page content ── */}
+      <div className="main-content" style={{flex:1,overflowY:"auto",padding:16}}>
 
         {/* ═══ DASHBOARD ═══ */}
         {tab==="dashboard"&&(
           <div className="fu">
-            <h1 style={{fontFamily:"'Bebas Neue'",fontSize:28,letterSpacing:2,marginBottom:3,color:T.text}}>
-              GOOD {new Date().getHours()<12?"MORNING":new Date().getHours()<17?"AFTERNOON":"EVENING"}, {user?.first_name?.toUpperCase()}
-            </h1>
-            <p style={{fontSize:12,color:T.muted,marginBottom:20}}>{new Date().toLocaleDateString("en-CA",{weekday:"long",month:"long",day:"numeric",year:"numeric"})}{user?.location&&" · "+user.location}</p>
-            {invLoad&&<div style={{...nWarn,display:"flex",alignItems:"center",gap:10,marginBottom:18}}><span className="spin" style={{borderTopColor:"#FF9500",borderColor:"rgba(255,149,0,.2)"}}></span>Loading live inventory…</div>}
-            {invErr&&<div style={{...nErr,marginBottom:18}}>⚠️ {invErr} <button style={{...btnS,marginLeft:12,fontSize:11}} onClick={()=>loadInv()}>Retry</button></div>}
-            <div style={{display:"flex",gap:14,marginBottom:20,flexWrap:"wrap"}}>
-              {[
-                {label:"My Clients",    v:visC.length,                                    c:T.accent,  t:"clients"},
-                {label:"Hot Leads",     v:visC.filter(c=>c.status==="Hot").length,         c:"#FF3B30", t:"clients"},
-                {label:"Lead Pool",     v:pool.length,                                    c:"#FF9500", t:"pool"},
-                {label:"Live Inventory",v:invLoad?"…":inv.length,                         c:"#0A84FF", t:"inventory"},
-                {label:"Ad Drafts",     v:posts.filter(p=>p.status==="Draft").length,      c:"#34C759", t:"drafts"},
-              ].map(s=>(
-                <div key={s.label} style={{...card,minWidth:100,flex:1,cursor:"pointer"}} onClick={()=>setTab(s.t)}>
-                  <div style={{fontSize:26,fontFamily:"'Bebas Neue'",color:s.c}}>{s.v}</div>
-                  <div style={{fontSize:11,fontWeight:600,color:T.muted}}>{s.label}</div>
+            <h1 style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:2,marginBottom:2,color:T.text}}>GOOD {new Date().getHours()<12?"MORNING":new Date().getHours()<17?"AFTERNOON":"EVENING"}, {user?.first_name?.toUpperCase()}</h1>
+            <p style={{fontSize:11,color:T.muted,marginBottom:16}}>{new Date().toLocaleDateString("en-CA",{weekday:"long",month:"long",day:"numeric"})}{user?.location&&" · "+user.location}</p>
+            {invErr&&<div style={{...nErr,marginBottom:16}}>⚠️ {invErr} <button style={{...btnS,marginLeft:8,fontSize:11}} onClick={()=>loadInv()}>Retry</button></div>}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(100px,1fr))",gap:10,marginBottom:16}}>
+              {[{l:"Clients",v:visC.length,c:T.accent,t:"clients"},{l:"Hot",v:visC.filter(c=>c.status==="Hot Lead").length,c:"#FF3B30",t:"clients"},{l:"Pool",v:pool.length,c:"#FF9500",t:"pool"},{l:"Inventory",v:invLoad?"…":inv.length,c:"#0A84FF",t:"inventory"},{l:"Drafts",v:posts.filter(p=>p.status==="Draft").length,c:"#34C759",t:"drafts"}].map(s=>(
+                <div key={s.l} style={{...card,cursor:"pointer",padding:14}} onClick={()=>setTab(s.t)}>
+                  <div style={{fontSize:22,fontFamily:"'Bebas Neue'",color:s.c}}>{s.v}</div>
+                  <div style={{fontSize:10,fontWeight:600,color:T.muted}}>{s.l}</div>
                 </div>
               ))}
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+            <div className="two-col" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
               <div style={card}>
-                <div style={{fontSize:11,fontWeight:700,color:T.accent,marginBottom:12,letterSpacing:1,textTransform:"uppercase"}}>🔥 Hot Leads</div>
-                {visC.filter(c=>c.status==="Hot").length===0&&<p style={{fontSize:13,color:T.muted}}>No hot leads yet.</p>}
-                {visC.filter(c=>c.status==="Hot").slice(0,5).map(c=>(
-                  <div key={c.id} style={{display:"flex",justifyContent:"space-between",padding:"9px 0",borderBottom:`1px solid ${T.border}`,cursor:"pointer"}} onClick={()=>{setSelC(c);setTab("clients");}}>
-                    <div><div style={{fontSize:13,fontWeight:600,color:T.text}}>{c.name}</div><div style={{fontSize:11,color:T.muted}}>{c.interested_in||"No vehicle paired"}</div></div>
-                    <span style={{fontSize:11,color:T.muted,whiteSpace:"nowrap",marginLeft:8}}>{fmtDate(c.last_contact)}</span>
+                <div style={{fontSize:11,fontWeight:700,color:T.accent,marginBottom:10,letterSpacing:1,textTransform:"uppercase"}}>🔥 Hot Leads</div>
+                {visC.filter(c=>c.status==="Hot Lead"||c.status==="Hot").slice(0,5).map(c=>(
+                  <div key={c.id} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:`1px solid ${T.border}`,cursor:"pointer"}} onClick={()=>{setSelC(c);setTab("clients");}}>
+                    <div><div style={{fontSize:13,fontWeight:600,color:T.text}}>{c.name}</div><div style={{fontSize:11,color:T.muted}}>{c.interested_in||"No vehicle"}</div></div>
                   </div>
                 ))}
-                <button style={{...btnS,marginTop:10,width:"100%",fontSize:12}} onClick={()=>setTab("clients")}>View All Clients →</button>
+                {visC.filter(c=>c.status==="Hot Lead"||c.status==="Hot").length===0&&<p style={{fontSize:13,color:T.muted}}>No hot leads.</p>}
               </div>
               <div style={card}>
-                <div style={{fontSize:11,fontWeight:700,color:"#0A84FF",marginBottom:12,letterSpacing:1,textTransform:"uppercase"}}>🚗 Latest Inventory</div>
-                {invLoad?[1,2,3,4].map(i=><div key={i} style={{display:"flex",gap:10,padding:"9px 0",borderBottom:`1px solid ${T.border}`}}><div className="skeleton" style={{flex:1}}></div><div className="skeleton" style={{width:60}}></div></div>):
-                inv.slice(0,5).map((v,i)=>(
-                  <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"9px 0",borderBottom:`1px solid ${T.border}`}}>
-                    <div><div style={{fontSize:13,fontWeight:600,color:T.text}}>{v.year} {v.make} {v.model}</div><div style={{fontSize:11,color:T.muted}}>{v.location}</div></div>
-                    <span style={{fontSize:12,fontWeight:700,color:T.accent,whiteSpace:"nowrap",marginLeft:8}}>{fmtCur(v.price)}</span>
+                <div style={{fontSize:11,fontWeight:700,color:"#0A84FF",marginBottom:10,letterSpacing:1,textTransform:"uppercase"}}>🚗 Latest Inventory</div>
+                {inv.slice(0,5).map((v,i)=>(
+                  <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:`1px solid ${T.border}`}}>
+                    <div style={{fontSize:13,fontWeight:600,color:T.text}}>{v.year} {v.make} {v.model}</div>
+                    <span style={{fontSize:12,fontWeight:700,color:T.accent}}>{fmtCur(v.price)}</span>
                   </div>
                 ))}
-                <button style={{...btnS,marginTop:10,width:"100%",fontSize:12}} onClick={()=>setTab("inventory")}>View All {inv.length} →</button>
               </div>
             </div>
           </div>
@@ -658,84 +810,163 @@ function App(){
         {/* ═══ CLIENTS ═══ */}
         {tab==="clients"&&(
           <div className="fu">
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:10}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,flexWrap:"wrap",gap:8}}>
               <div>
-                <h2 style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:2,color:T.text}}>CLIENTS</h2>
-                <p style={{fontSize:12,color:T.muted}}>{visC.length} contacts · {isAdmin?"All locations":isManager?"Your location ("+user?.location+")":"Your leads only"}</p>
+                <h2 style={{fontFamily:"'Bebas Neue'",fontSize:24,letterSpacing:2,color:T.text}}>CLIENTS</h2>
+                <p style={{fontSize:11,color:T.muted}}>{visC.length} contacts · {isAdmin?"All locations":isManager?"Your location":"Your leads"}</p>
               </div>
-              <button style={btnP} onClick={()=>{setCf({name:"",phone:"",email:"",location:"",status:"Warm",notes:"",interested_in:"",paired_vehicle_stock:""});setAddC(true);}}>+ Add New Client</button>
+              <button style={btnP} onClick={()=>{setCf({name:"",phone:"",email:"",location:"",status:"Warm",notes:"",interested_in:"",paired_vehicle_stock:""});setAddC(true);}}>+ Add Client</button>
             </div>
             {cMsg.t&&<div style={cMsg.type==="error"?nErr:nOk} className="fu">{cMsg.t}</div>}
-            <input style={{...inp,marginBottom:14}} placeholder="🔍 Search by name, email, phone…" value={cSearch} onChange={e=>setCSearch(e.target.value)}/>
-            <div style={{display:"grid",gridTemplateColumns:selC?"1fr 390px":"1fr",gap:18,alignItems:"start"}}>
+            <input style={{...inp,marginBottom:12}} placeholder="🔍 Search clients…" value={cSearch} onChange={e=>setCSearch(e.target.value)}/>
+            <div className="two-col" style={{display:"grid",gridTemplateColumns:selC?"1fr 400px":"1fr",gap:14,alignItems:"start"}}>
               <div style={{...card,padding:0,overflow:"hidden"}}>
                 {cLoad?<div style={{padding:20,color:T.muted,textAlign:"center"}}>Loading…</div>:
-                 filtC.length===0?<div style={{padding:30,color:T.muted,textAlign:"center"}}>{cSearch?"No matches.":"No clients yet!"}</div>:
-                 filtC.map(c=>(
-                  <div key={c.id} style={{display:"flex",alignItems:"center",gap:12,padding:"13px 16px",cursor:"pointer",borderBottom:`1px solid ${T.border}`,background:selC?.id===c.id?T.accent+"15":"transparent",borderLeft:selC?.id===c.id?`3px solid ${T.accent}`:"3px solid transparent",transition:"background .15s"}} onClick={()=>setSelC(c)}>
-                    <div style={{width:38,height:38,borderRadius:"50%",background:T.accent+"22",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:T.accent,flexShrink:0}}>
+                filtC.length===0?<div style={{padding:24,color:T.muted,textAlign:"center"}}>{cSearch?"No matches.":"No clients yet!"}</div>:
+                filtC.map(c=>{
+                  const owner=isOwnerOrSP2(c);
+                  return(
+                  <div key={c.id} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",cursor:"pointer",borderBottom:`1px solid ${T.border}`,background:selC?.id===c.id?T.accent+"15":"transparent",borderLeft:selC?.id===c.id?`3px solid ${T.accent}`:"3px solid transparent"}} onClick={()=>setSelC(c)}>
+                    <div style={{width:36,height:36,borderRadius:"50%",background:T.accent+"22",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:T.accent,flexShrink:0}}>
                       {c.name.split(" ").map(n=>n[0]).join("").slice(0,2)}
                     </div>
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{display:"flex",alignItems:"center",gap:8}}>
-                        <span style={{fontSize:14,fontWeight:600,color:T.text}}>{c.name}</span>
-                        <span style={{padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:700,background:STATUS_C[c.status]||"#555",color:"#fff"}}>{c.status}</span>
+                      <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                        <span style={{fontSize:13,fontWeight:600,color:T.text}}>{c.name}</span>
+                        <span style={{padding:"1px 7px",borderRadius:20,fontSize:10,fontWeight:700,background:statusColor(c.status)+"22",color:statusColor(c.status),border:`1px solid ${statusColor(c.status)}44`}}>{statusIcon(c.status)} {c.status}</span>
+                        {!owner&&<span style={{fontSize:9,color:T.muted,background:T.bg,border:`1px solid ${T.border}`,padding:"1px 5px",borderRadius:4}}>READ-ONLY</span>}
                       </div>
-                      <div style={{fontSize:12,color:T.muted,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.interested_in||"No vehicle"} {c.location?"· "+c.location:""}</div>
+                      <div style={{fontSize:11,color:T.muted,marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{c.interested_in||"No vehicle"}</div>
                     </div>
-                    <span style={{fontSize:11,color:T.muted,flexShrink:0,marginLeft:8}}>{fmtDate(c.last_contact)}</span>
                   </div>
-                ))}
+                );})}
               </div>
 
-              {selC&&(
-                <div style={{...card,position:"sticky",top:0}} className="fu">
-                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:16}}>
+              {selC&&(()=>{
+                const owner=isOwnerOrSP2(selC);
+                const sp2list=leadAccess.filter(a=>a.client_id===selC.id);
+                return(
+                <div style={{...card,position:"sticky",top:0,maxHeight:"calc(100vh - 140px)",overflowY:"auto"}} className="fu">
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}>
                     <div>
-                      <h3 style={{fontSize:17,fontWeight:700,color:T.text}}>{selC.name}</h3>
-                      <span style={{padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700,background:STATUS_C[selC.status]||"#555",color:"#fff",display:"inline-block",marginTop:5}}>{selC.status}</span>
+                      <h3 style={{fontSize:16,fontWeight:700,color:T.text}}>{selC.name}</h3>
+                      <div style={{display:"flex",gap:6,marginTop:5,flexWrap:"wrap"}}>
+                        <span style={{padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700,background:statusColor(selC.status),color:"#fff"}}>{statusIcon(selC.status)} {selC.status}</span>
+                        {!owner&&<span style={{fontSize:10,color:"#FF9500",background:"rgba(255,149,0,.1)",border:"1px solid rgba(255,149,0,.3)",padding:"2px 8px",borderRadius:20}}>👁 Read-Only</span>}
+                      </div>
                     </div>
-                    <button style={{background:"none",border:"none",color:T.muted,cursor:"pointer",fontSize:22}} onClick={()=>setSelC(null)}>×</button>
+                    <button style={{background:"none",border:"none",color:T.muted,cursor:"pointer",fontSize:20}} onClick={()=>setSelC(null)}>×</button>
                   </div>
-                  <div style={{display:"grid",gap:7,marginBottom:14}}>
-                    {selC.phone&&<div style={{display:"flex",gap:10,fontSize:13,color:T.muted}}><span>📞</span><a href={"tel:"+selC.phone} style={{color:T.muted,textDecoration:"none"}}>{selC.phone}</a></div>}
-                    {selC.email&&<div style={{display:"flex",gap:10,fontSize:13,color:T.muted}}><span>✉️</span><a href={"mailto:"+selC.email} style={{color:T.muted,textDecoration:"none"}}>{selC.email}</a></div>}
-                    {selC.location&&<div style={{display:"flex",gap:10,fontSize:13,color:T.muted}}><span>📍</span><span>{selC.location}</span></div>}
-                    <div style={{display:"flex",gap:10,fontSize:11,color:T.muted}}><span>👤</span><span>Created by {users.find(u=>u.id===selC.created_by)?.first_name||"Unknown"} · {selC.assigned_location}</span></div>
+
+                  {/* Contact info — phone hidden for read-only */}
+                  <div style={{display:"grid",gap:6,marginBottom:12}}>
+                    {owner&&selC.phone&&<div style={{display:"flex",gap:8,fontSize:13,color:T.muted,alignItems:"center"}}><span>📞</span><a href={"tel:"+selC.phone} style={{color:T.muted,textDecoration:"none"}}>{selC.phone}</a></div>}
+                    {!owner&&selC.phone&&<div style={{display:"flex",gap:8,fontSize:13,color:T.muted,alignItems:"center"}}><span>📞</span><span style={{color:T.muted,letterSpacing:2}}>●●●-●●●-●●●●</span></div>}
+                    {selC.email&&<div style={{display:"flex",gap:8,fontSize:13,color:T.muted}}><span>✉️</span><a href={"mailto:"+selC.email} style={{color:T.muted,textDecoration:"none"}}>{selC.email}</a></div>}
+                    {selC.location&&<div style={{display:"flex",gap:8,fontSize:13,color:T.muted}}><span>📍</span><span>{selC.location}</span></div>}
+                    <div style={{display:"flex",gap:8,fontSize:11,color:T.muted}}><span>👤</span><span>{users.find(u=>u.id===selC.created_by)?.first_name||"Unknown"} · {selC.assigned_location}</span></div>
                   </div>
-                  {selC.notes&&<div style={{background:T.bg,borderRadius:10,padding:12,marginBottom:14}}>
-                    <div style={{fontSize:10,color:T.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:5}}>Notes</div>
-                    <p style={{fontSize:13,color:T.muted,lineHeight:1.7}}>{selC.notes}</p>
-                  </div>}
-                  <div style={{marginBottom:14}}>
-                    <div style={{fontSize:10,color:T.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Paired Vehicle</div>
+
+                  {/* Paired vehicle */}
+                  <div style={{marginBottom:12}}>
+                    <div style={{fontSize:10,color:T.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Paired Vehicle</div>
                     {selC.interested_in?(
-                      <div style={{background:T.accent+"11",border:`1px solid ${T.accent}33`,borderRadius:10,padding:12}}>
+                      <div style={{background:T.accent+"11",border:`1px solid ${T.accent}33`,borderRadius:9,padding:10}}>
                         <div style={{fontSize:13,fontWeight:700,color:T.text}}>{selC.interested_in}</div>
-                        {selC.paired_vehicle_stock&&<div style={{fontSize:12,color:T.muted,marginTop:2}}>Stock #{selC.paired_vehicle_stock}</div>}
-                        <div style={{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"}}>
+                        {selC.paired_vehicle_stock&&<div style={{fontSize:11,color:T.muted}}>Stock #{selC.paired_vehicle_stock}</div>}
+                        {owner&&<div style={{display:"flex",gap:6,marginTop:8}}>
                           <button style={{...btnS,fontSize:11}} onClick={()=>{setVSearch("");setPairModal(selC);}}>Change</button>
-                          <button style={{...btnS,fontSize:11}} onClick={()=>openDraft(inv.find(v=>v.stock===selC.paired_vehicle_stock)||null)}>📝 Draft Ad</button>
+                          <button style={{...btnS,fontSize:11}} onClick={()=>openDraft(inv.find(v=>v.stock===selC.paired_vehicle_stock)||null)}>📝 Ad</button>
+                        </div>}
+                      </div>
+                    ):owner?<button style={{...btnS,width:"100%"}} onClick={()=>{setVSearch("");setPairModal(selC);}}>+ Pair a Vehicle</button>:<div style={{fontSize:12,color:T.muted}}>No vehicle paired.</div>}
+                  </div>
+
+                  {/* Sales Person 2 */}
+                  {owner&&(
+                    <div style={{marginBottom:12}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                        <div style={{fontSize:10,color:T.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:1}}>Sales Person 2</div>
+                        <button style={{...btnS,fontSize:10,padding:"3px 8px"}} onClick={()=>setAddingSP2(s=>!s)}>+ Add</button>
+                      </div>
+                      {sp2list.length===0&&<div style={{fontSize:12,color:T.muted}}>No co-assignee yet.</div>}
+                      {sp2list.map(a=>(
+                        <div key={a.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:`1px solid ${T.border}`}}>
+                          <span style={{fontSize:12,color:T.text}}>{a.user?.first_name} {a.user?.last_name} <span style={{color:T.muted,fontSize:11}}>({a.user?.location})</span></span>
+                          <button style={{...btnS,fontSize:10,color:"#E63946",padding:"2px 7px"}} onClick={()=>removeSP2(a.id,a.user?.first_name+" "+a.user?.last_name)}>Remove</button>
+                        </div>
+                      ))}
+                      {addingSP2&&(
+                        <div style={{marginTop:8}}>
+                          <input style={{...inp,fontSize:12,marginBottom:6}} placeholder="Search rep by name…" value={sp2Search} onChange={e=>setSP2Search(e.target.value)} autoFocus/>
+                          <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,maxHeight:140,overflowY:"auto"}}>
+                            {users.filter(u=>u.id!==user.id&&u.status==="active"&&!sp2list.some(a=>a.user_id===u.id)&&(u.first_name+" "+u.last_name+" "+u.location).toLowerCase().includes(sp2Search.toLowerCase())).slice(0,6).map(u=>(
+                              <div key={u.id} onClick={()=>addSP2(u)} style={{padding:"8px 12px",cursor:"pointer",borderBottom:`1px solid ${T.border}`,fontSize:12,color:T.text}}>
+                                {u.first_name} {u.last_name} <span style={{color:T.muted}}>· {u.location} · {u.role}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Communication log */}
+                  <div style={{marginBottom:12}}>
+                    <div style={{fontSize:10,color:T.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Communication Log</div>
+                    {owner&&(
+                      <div style={{marginBottom:10}}>
+                        <div style={{display:"flex",gap:5,marginBottom:6,flexWrap:"wrap"}}>
+                          {LOG_TYPES.filter(l=>l.type!=="system"&&l.type!=="status").map(l=>(
+                            <button key={l.type} onClick={()=>setLogType(l.type)} style={{...btnS,fontSize:11,padding:"4px 9px",background:logType===l.type?l.color+"22":"rgba(128,128,128,.08)",color:logType===l.type?l.color:T.muted,borderColor:logType===l.type?l.color+"44":T.border}}>{l.icon} {l.label}</button>
+                          ))}
+                        </div>
+                        <div style={{display:"flex",gap:6}}>
+                          <input style={{...inp,flex:1,fontSize:12,padding:"8px 10px"}} placeholder={`Add ${LOG_TYPES.find(l=>l.type===logType)?.label||"entry"}…`} value={logText} onChange={e=>setLogText(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addLog()}/>
+                          <button style={{...btnP,padding:"8px 12px",fontSize:12,flexShrink:0}} onClick={addLog} disabled={logLoading}>{logLoading?<span className="spin"></span>:"Add"}</button>
                         </div>
                       </div>
-                    ):<button style={{...btnS,width:"100%"}} onClick={()=>{setVSearch("");setPairModal(selC);}}>+ Pair a Vehicle</button>}
+                    )}
+                    <div style={{maxHeight:220,overflowY:"auto"}}>
+                      {commLoad?<div style={{color:T.muted,fontSize:12}}>Loading…</div>:
+                      commLog.length===0?<div style={{color:T.muted,fontSize:12}}>No activity yet.</div>:
+                      commLog.map(entry=>(
+                        <div key={entry.id} style={{display:"flex",gap:8,padding:"7px 0",borderBottom:`1px solid ${T.border}`,alignItems:"flex-start"}}>
+                          <span style={{fontSize:14,flexShrink:0,marginTop:1}}>{logIcon(entry.type)}</span>
+                          <div style={{flex:1}}>
+                            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                              <span style={{fontSize:11,fontWeight:700,color:logColor(entry.type)}}>{LOG_TYPES.find(l=>l.type===entry.type)?.label||entry.type}</span>
+                              <span style={{fontSize:10,color:T.muted}}>{fmtTime(entry.created_at)}</span>
+                            </div>
+                            <div style={{fontSize:12,color:T.text,marginTop:2,lineHeight:1.4}}>{entry.content}</div>
+                            <div style={{fontSize:10,color:T.muted,marginTop:1}}>— {entry.author?.first_name||"System"} {entry.author?.last_name||""}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
+
                   {/* Lead Pool */}
-                  <div style={{marginBottom:14}}>
-                    <div style={{fontSize:10,color:T.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Lead Pool</div>
-                    {pool.find(p=>p.client_id===selC.id)?
-                      <div style={{...nWarn,marginBottom:0,fontSize:12}}>🎯 Already in the Lead Pool.</div>:
-                      <div style={{display:"grid",gap:8}}>
-                        <textarea style={{...inp,minHeight:56,fontSize:12,resize:"none"}} placeholder="Optional note for other reps…" value={poolNote} onChange={e=>setPoolNote(e.target.value)}/>
+                  {owner&&!pool.find(p=>p.client_id===selC.id)&&selC.created_by===user.id&&(
+                    <div style={{marginBottom:12}}>
+                      <div style={{fontSize:10,color:T.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Lead Pool</div>
+                      <div style={{display:"grid",gap:6}}>
+                        <textarea style={{...inp,minHeight:50,fontSize:12,resize:"none"}} placeholder="Optional note…" value={poolNote} onChange={e=>setPoolNote(e.target.value)}/>
                         <button style={{...btnS,color:"#FF9500",borderColor:"rgba(255,149,0,.4)"}} onClick={()=>addToPool(selC)}>🎯 Add to Lead Pool</button>
-                      </div>}
-                  </div>
-                  <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                    <button style={{...btnP,flex:1,fontSize:12}} onClick={()=>{setCf({name:selC.name,phone:selC.phone||"",email:selC.email||"",location:selC.location||"",status:selC.status,notes:selC.notes||"",interested_in:selC.interested_in||"",paired_vehicle_stock:selC.paired_vehicle_stock||""});setEditC(true);}}>✏️ Edit</button>
-                    <button style={{...btnS,color:"#E63946",fontSize:12}} onClick={()=>deleteClient(selC.id)}>🗑️</button>
-                  </div>
+                      </div>
+                    </div>
+                  )}
+                  {pool.find(p=>p.client_id===selC.id)&&<div style={{...nWarn,marginBottom:12,fontSize:12}}>🎯 In Lead Pool</div>}
+
+                  {owner&&(
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                      <button style={{...btnP,flex:1,fontSize:12}} onClick={()=>{setCf({name:selC.name,phone:selC.phone||"",email:selC.email||"",location:selC.location||"",status:selC.status,notes:selC.notes||"",interested_in:selC.interested_in||"",paired_vehicle_stock:selC.paired_vehicle_stock||""});setEditC(true);}}>✏️ Edit</button>
+                      <button style={{...btnS,color:"#E63946",fontSize:12}} onClick={()=>deleteClient(selC.id)}>🗑️</button>
+                    </div>
+                  )}
                 </div>
-              )}
+                );
+              })()}
             </div>
           </div>
         )}
@@ -743,107 +974,88 @@ function App(){
         {/* ═══ LEAD POOL ═══ */}
         {tab==="pool"&&(
           <div className="fu">
-            <div style={{marginBottom:18}}>
-              <h2 style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:2,color:T.text}}>LEAD POOL</h2>
-              <p style={{fontSize:12,color:T.muted}}>{pool.length} leads available · Claim one to take it as your own</p>
-            </div>
+            <h2 style={{fontFamily:"'Bebas Neue'",fontSize:24,letterSpacing:2,color:T.text,marginBottom:4}}>LEAD POOL</h2>
+            <p style={{fontSize:11,color:T.muted,marginBottom:16}}>{pool.length} available · Claim to take ownership</p>
             {poolMsg.t&&<div style={poolMsg.type==="error"?nErr:nOk} className="fu">{poolMsg.t}</div>}
             {poolLoad?<div style={{color:T.muted}}>Loading…</div>:
-             pool.length===0?
-               <div style={{...card,textAlign:"center",padding:48}}>
-                 <div style={{fontSize:40,marginBottom:12}}>🎯</div>
-                 <div style={{fontSize:16,fontWeight:700,marginBottom:8,color:T.text}}>Lead Pool is empty</div>
-                 <p style={{fontSize:13,color:T.muted}}>When a rep can't reach a client they add them here. You'll get notified automatically.</p>
-               </div>:
-             pool.map(item=>(
-               <div key={item.id} style={{...card,marginBottom:14}}>
-                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
-                   <div style={{flex:1}}>
-                     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
-                       <div style={{fontSize:15,fontWeight:700,color:T.text}}>{item.client?.name||"Unknown"}</div>
-                       <span style={{padding:"2px 8px",borderRadius:20,fontSize:10,fontWeight:700,background:STATUS_C[item.client?.status]||"#555",color:"#fff"}}>{item.client?.status}</span>
-                     </div>
-                     {item.client?.phone&&<div style={{fontSize:12,color:T.muted,marginBottom:3}}>📞 {item.client.phone}</div>}
-                     {item.client?.email&&<div style={{fontSize:12,color:T.muted,marginBottom:3}}>✉️ {item.client.email}</div>}
-                     {item.client?.interested_in&&<div style={{fontSize:12,color:T.muted,marginBottom:3}}>🚗 {item.client.interested_in}</div>}
-                     {item.note&&<div style={{background:T.bg,borderRadius:8,padding:"8px 12px",marginTop:8,fontSize:12,color:T.muted}}>💬 "{item.note}"</div>}
-                     <div style={{fontSize:11,color:T.muted,marginTop:8}}>Added by {item.adder?.first_name} {item.adder?.last_name} ({item.adder?.location}) · {fmtDate(item.created_at)}</div>
-                   </div>
-                   {item.added_by!==user?.id?
-                     <button style={{...btnP,fontSize:12,whiteSpace:"nowrap"}} className="pool-btn" onClick={()=>claimFromPool(item)}>🙋 Claim Lead</button>:
-                     <span style={{fontSize:11,color:T.muted,padding:"6px 12px",background:T.bg,borderRadius:7}}>Your lead</span>
-                   }
-                 </div>
-               </div>
-             ))}
+            pool.length===0?<div style={{...card,textAlign:"center",padding:40}}><div style={{fontSize:36,marginBottom:10}}>🎯</div><div style={{fontSize:15,fontWeight:700,color:T.text,marginBottom:6}}>Pool is empty</div><p style={{fontSize:12,color:T.muted}}>When a rep drops a lead here you'll get notified.</p></div>:
+            pool.map(item=>(
+              <div key={item.id} style={{...card,marginBottom:12}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10}}>
+                  <div style={{flex:1}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                      <div style={{fontSize:14,fontWeight:700,color:T.text}}>{item.client?.name}</div>
+                      <span style={{padding:"1px 7px",borderRadius:20,fontSize:10,fontWeight:700,background:statusColor(item.client?.status)+"22",color:statusColor(item.client?.status)}}>{item.client?.status}</span>
+                    </div>
+                    {item.client?.email&&<div style={{fontSize:12,color:T.muted,marginBottom:2}}>✉️ {item.client.email}</div>}
+                    {item.client?.interested_in&&<div style={{fontSize:12,color:T.muted,marginBottom:2}}>🚗 {item.client.interested_in}</div>}
+                    {item.note&&<div style={{background:T.bg,borderRadius:7,padding:"6px 10px",marginTop:6,fontSize:12,color:T.muted}}>💬 "{item.note}"</div>}
+                    <div style={{fontSize:11,color:T.muted,marginTop:6}}>{item.adder?.first_name} {item.adder?.last_name} ({item.adder?.location}) · {fmtDate(item.created_at)}</div>
+                  </div>
+                  {item.added_by!==user?.id?
+                    <button style={{...btnP,fontSize:12,whiteSpace:"nowrap"}} onClick={()=>claimFromPool(item)}>🙋 Claim</button>:
+                    <span style={{fontSize:11,color:T.muted,padding:"5px 10px",background:T.bg,borderRadius:6}}>Your lead</span>}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
         {/* ═══ INVENTORY ═══ */}
         {tab==="inventory"&&(
           <div className="fu">
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14,flexWrap:"wrap",gap:10}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12,flexWrap:"wrap",gap:8}}>
               <div>
-                <h2 style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:2,color:T.text}}>LIVE INVENTORY</h2>
-                <p style={{fontSize:12,color:T.muted}}>{invLoad?"Fetching…":filtInv.length+" of "+inv.length+" vehicles"+(synced?" · synced "+synced:"")}</p>
+                <h2 style={{fontFamily:"'Bebas Neue'",fontSize:24,letterSpacing:2,color:T.text}}>LIVE INVENTORY</h2>
+                <p style={{fontSize:11,color:T.muted}}>{invLoad?"Fetching…":filtInv.length+" of "+inv.length+(synced?" · "+synced:"")}</p>
               </div>
-              <button style={{...btnP,display:"flex",alignItems:"center",gap:8}} onClick={()=>loadInv(true)} disabled={syncing||invLoad}>
+              <button style={{...btnP,display:"flex",alignItems:"center",gap:6,padding:"8px 14px",fontSize:12}} onClick={()=>loadInv(true)} disabled={syncing||invLoad}>
                 {syncing?<><span className="spin"></span>Syncing…</>:"🔄 Sync"}
               </button>
             </div>
             {syncMsg.t&&<div style={syncMsg.type==="success"?nOk:nErr} className="fu">{syncMsg.t}</div>}
-            {/* Sort pills */}
-            <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
-              <span style={{fontSize:11,color:T.muted,fontWeight:700}}>SORT:</span>
-              {[["price","💰 Price"],["year","📅 Year"],["mileage","🔢 KM"],["make","🔤 Make"],["location","📍 Location"]].map(([col,lbl])=>(
-                <button key={col} onClick={()=>toggleSort(col)} style={{...btnS,fontSize:11,background:iSort.col===col?T.accent+"22":"rgba(128,128,128,.08)",color:iSort.col===col?T.accent:T.muted,borderColor:iSort.col===col?T.accent+"44":T.border}}>
-                  {lbl}{arr(col)}
+            <div style={{display:"flex",gap:7,marginBottom:10,flexWrap:"wrap",alignItems:"center"}}>
+              <span style={{fontSize:10,color:T.muted,fontWeight:700}}>SORT:</span>
+              {[["price","💰"],["year","📅"],["mileage","🔢"],["make","🔤"]].map(([col,icon])=>(
+                <button key={col} onClick={()=>toggleSort(col)} style={{...btnS,fontSize:11,padding:"4px 9px",background:iSort.col===col?T.accent+"22":"rgba(128,128,128,.08)",color:iSort.col===col?T.accent:T.muted,borderColor:iSort.col===col?T.accent+"44":T.border}}>
+                  {icon} {col.charAt(0).toUpperCase()+col.slice(1)}{arr(col)}
                 </button>
               ))}
             </div>
-            <div style={{display:"flex",gap:10,marginBottom:14,flexWrap:"wrap",alignItems:"center"}}>
-              <input style={{...inp,maxWidth:260,fontSize:12,padding:"8px 12px"}} placeholder="🔍 Search make, model, stock…" value={iSearch} onChange={e=>setISearch(e.target.value)}/>
-              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                {invTypes.map(t=><button key={t} onClick={()=>setIFilter(t)} style={{...btnS,background:iFilter===t?T.accent:"rgba(128,128,128,.08)",color:iFilter===t?"#fff":T.muted,borderColor:iFilter===t?T.accent:T.border,fontSize:11}}>{t}</button>)}
+            <div style={{display:"flex",gap:7,marginBottom:10,flexWrap:"wrap",alignItems:"center"}}>
+              <input style={{...inp,maxWidth:220,fontSize:12,padding:"7px 10px"}} placeholder="🔍 Stock #, make, model…" value={iSearch} onChange={e=>setISearch(e.target.value)}/>
+              <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+                {invTypes.map(t=><button key={t} onClick={()=>setIFilter(t)} style={{...btnS,fontSize:11,padding:"4px 9px",background:iFilter===t?T.accent:"rgba(128,128,128,.08)",color:iFilter===t?"#fff":T.muted,borderColor:iFilter===t?T.accent:T.border}}>{t}</button>)}
               </div>
-              <select style={{...inp,width:"auto",minWidth:150,fontSize:12,padding:"7px 12px"}} value={iLoc} onChange={e=>setILoc(e.target.value)}>
-                {invLocs.map(l=><option key={l} value={l}>{l==="All"?"All Locations":"📍 "+l}</option>)}
+              <select style={{...inp,width:"auto",minWidth:140,fontSize:12,padding:"6px 10px"}} value={iLoc} onChange={e=>setILoc(e.target.value)}>
+                {invLocs.map(l=><option key={l}>{l==="All"?"All Locations":"📍 "+l}</option>)}
               </select>
-              <span style={{fontSize:11,color:T.muted,marginLeft:"auto"}}>{filtInv.length} shown</span>
             </div>
-            {invLoad&&<div style={{...card,padding:0,overflow:"hidden"}}>{[1,2,3,4,5].map(i=><div key={i} style={{display:"flex",gap:16,padding:"12px 16px",borderBottom:`1px solid ${T.border}`}}>{[80,60,80,100,70,80,60,60].map((w,j)=><div key={j} className="skeleton" style={{width:w,flexShrink:0}}></div>)}</div>)}</div>}
             {!invLoad&&(
               <div style={{...card,padding:0,overflow:"hidden"}}>
                 <div style={{overflowX:"auto"}}>
-                  <table style={{width:"100%",borderCollapse:"collapse"}}>
+                  <table className="inv-table" style={{width:"100%",borderCollapse:"collapse"}}>
                     <thead><tr style={{background:T.bg}}>
-                      {[["year","Year"],["make","Make"],["model","Model"],["price","Price"],["mileage","KM"],["color","Colour"],["location","Location"],["type","Type"],["stock","Stock #"]].map(([c,l])=>(
-                        <th key={c} onClick={()=>toggleSort(c)} style={{color:iSort.col===c?T.accent:T.muted,borderBottomColor:T.border,padding:"10px 14px",textAlign:"left",fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:".7px",cursor:"pointer",userSelect:"none",whiteSpace:"nowrap"}}>
-                          {l}{arr(c)}
-                        </th>
+                      {[["year","Year"],["make","Make"],["model","Model"],["price","Price"],["mileage","KM"],["color","Colour"],["location","Location"],["stock","Stock"]].map(([c,l])=>(
+                        <th key={c} onClick={()=>toggleSort(c)} style={{color:iSort.col===c?T.accent:T.muted,borderBottomColor:T.border,padding:"9px 12px",textAlign:"left",fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:".7px",cursor:"pointer",whiteSpace:"nowrap"}}>{l}{arr(c)}</th>
                       ))}
-                      <th style={{color:T.muted,borderBottomColor:T.border,padding:"10px 14px",fontSize:11,fontWeight:600,textTransform:"uppercase"}}>Actions</th>
+                      <th style={{color:T.muted,borderBottomColor:T.border,padding:"9px 12px",fontSize:10,fontWeight:600,textTransform:"uppercase"}}>Actions</th>
                     </tr></thead>
                     <tbody>
                       {filtInv.map((v,i)=>(
-                        <tr key={i}>
-                          <td style={{fontWeight:700,borderBottomColor:T.border,color:T.text,padding:"10px 14px",fontSize:13}}>{v.year}</td>
-                          <td style={{borderBottomColor:T.border,color:T.text,padding:"10px 14px",fontSize:13}}>{v.make}</td>
-                          <td style={{borderBottomColor:T.border,color:T.text,padding:"10px 14px",fontSize:13}}>{v.model}</td>
-                          <td style={{color:T.accent,fontWeight:700,borderBottomColor:T.border,padding:"10px 14px",fontSize:13}}>{fmtCur(v.price)}</td>
-                          <td style={{color:T.muted,fontSize:12,borderBottomColor:T.border,padding:"10px 14px"}}>{v.mileage}</td>
-                          <td style={{color:T.muted,fontSize:12,borderBottomColor:T.border,padding:"10px 14px"}}>{v.color||"—"}</td>
-                          <td style={{borderBottomColor:T.border,padding:"10px 14px"}}>
-                            <span style={{fontSize:11,background:T.bg,border:`1px solid ${T.border}`,borderRadius:5,padding:"2px 8px",color:T.text,whiteSpace:"nowrap"}}>📍 {v.location}</span>
-                          </td>
-                          <td style={{borderBottomColor:T.border,padding:"10px 14px"}}>
-                            {v.type&&<span style={{display:"inline-block",padding:"2px 9px",borderRadius:6,fontSize:11,fontWeight:700,background:T.accent+"22",color:T.accent,border:`1px solid ${T.accent}44`}}>{v.type}</span>}
-                          </td>
-                          <td style={{fontFamily:"monospace",fontSize:11,color:T.muted,borderBottomColor:T.border,padding:"10px 14px"}}>{v.stock}</td>
-                          <td style={{borderBottomColor:T.border,padding:"10px 14px"}}>
-                            <div style={{display:"flex",gap:6}}>
-                              <button style={{...btnS,fontSize:11,padding:"4px 10px"}} onClick={()=>openDraft(v)}>📝 Ad</button>
-                              {v.listingUrl&&<a href={v.listingUrl} target="_blank" rel="noopener noreferrer" style={{...btnS,fontSize:11,padding:"4px 9px",textDecoration:"none"}}>↗</a>}
+                        <tr key={i} style={{cursor:"pointer"}} onClick={()=>{setSelVehicle(v);loadVehiclePhotos([v.stock]);}}>
+                          <td style={{fontWeight:700,borderBottomColor:T.border,color:T.text,padding:"9px 12px",fontSize:12}}>{v.year}</td>
+                          <td style={{borderBottomColor:T.border,color:T.text,padding:"9px 12px",fontSize:12}}>{v.make}</td>
+                          <td style={{borderBottomColor:T.border,color:T.text,padding:"9px 12px",fontSize:12}}>{v.model}</td>
+                          <td style={{color:T.accent,fontWeight:700,borderBottomColor:T.border,padding:"9px 12px",fontSize:12}}>{fmtCur(v.price)}</td>
+                          <td style={{color:T.muted,fontSize:11,borderBottomColor:T.border,padding:"9px 12px"}}>{v.mileage}</td>
+                          <td style={{color:T.muted,fontSize:11,borderBottomColor:T.border,padding:"9px 12px"}}>{v.color||"—"}</td>
+                          <td style={{borderBottomColor:T.border,padding:"9px 12px"}}><span style={{fontSize:10,background:T.bg,border:`1px solid ${T.border}`,borderRadius:4,padding:"2px 6px",color:T.text}}>📍 {v.location}</span></td>
+                          <td style={{fontFamily:"monospace",fontSize:10,color:T.muted,borderBottomColor:T.border,padding:"9px 12px"}}>{v.stock}</td>
+                          <td style={{borderBottomColor:T.border,padding:"9px 12px"}} onClick={e=>e.stopPropagation()}>
+                            <div style={{display:"flex",gap:5}}>
+                              <button style={{...btnS,fontSize:11,padding:"3px 8px"}} onClick={()=>openDraft(v)}>📝</button>
+                              {v.listingUrl&&<a href={v.listingUrl} target="_blank" rel="noopener noreferrer" style={{...btnS,fontSize:11,padding:"3px 8px",textDecoration:"none"}}>↗</a>}
                             </div>
                           </td>
                         </tr>
@@ -853,106 +1065,77 @@ function App(){
                 </div>
               </div>
             )}
+            {invLoad&&<div style={{color:T.muted,padding:20,textAlign:"center"}}>Loading inventory…</div>}
           </div>
         )}
 
         {/* ═══ AD DRAFTS ═══ */}
         {tab==="drafts"&&(
           <div className="fu">
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:10}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,flexWrap:"wrap",gap:8}}>
               <div>
-                <h2 style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:2,color:T.text}}>AD DRAFTS</h2>
-                <p style={{fontSize:12,color:T.muted}}>{posts.length} total · {posts.filter(p=>p.status==="Draft").length} drafts · {posts.filter(p=>p.status==="Posted").length} posted</p>
+                <h2 style={{fontFamily:"'Bebas Neue'",fontSize:24,letterSpacing:2,color:T.text}}>AD DRAFTS</h2>
+                <p style={{fontSize:11,color:T.muted}}>{posts.length} total · {posts.filter(p=>p.status==="Draft").length} drafts</p>
               </div>
-              <button style={btnP} onClick={()=>openDraft()}>+ New Ad Draft</button>
+              <button style={btnP} onClick={()=>openDraft()}>+ New Draft</button>
             </div>
             {pMsg.t&&<div style={pMsg.type==="error"?nErr:nOk} className="fu">{pMsg.t}</div>}
-            <div style={{...nInfo,marginBottom:20,display:"flex",gap:14,alignItems:"flex-start"}}>
-              <span style={{fontSize:22,flexShrink:0}}>📘</span>
-              <div style={{fontSize:12,lineHeight:1.7}}>
-                <strong>Facebook Marketplace:</strong> Meta blocks automated posting. Click <strong>"Copy & Open Marketplace"</strong> — your ad copies to clipboard and Marketplace opens. Paste, fill in details, and publish.<br/>
-                All ads follow the official HOC template with AMVIC and financing language baked in.
-              </div>
+            <div style={{...nInfo,marginBottom:16,fontSize:12,display:"flex",gap:10,alignItems:"flex-start"}}>
+              <span style={{fontSize:18}}>📘</span>
+              <div>All ads use the official HOC template. Features section is <strong>blank by default</strong> — fill in the actual features for each vehicle. Click <strong>"Copy & Open Marketplace"</strong> to post.</div>
             </div>
-            {pLoad?<div style={{color:T.muted}}>Loading…</div>:
-             posts.length===0?
-               <div style={{...card,textAlign:"center",padding:48}}>
-                 <div style={{fontSize:40,marginBottom:12}}>📝</div>
-                 <div style={{fontSize:16,fontWeight:700,marginBottom:8,color:T.text}}>No ad drafts yet</div>
-                 <button style={btnP} onClick={()=>openDraft()}>Create First Ad Draft</button>
-               </div>:
-             posts.map(p=>(
-               <div key={p.id} style={{...card,marginBottom:14}}>
-                 <div style={{display:"flex",gap:14,alignItems:"flex-start",marginBottom:12}}>
-                   {p.vehicle_image&&<img src={p.vehicle_image} alt="" style={{width:120,height:80,objectFit:"cover",borderRadius:8,flexShrink:0}} onError={e=>e.target.style.display="none"}/>}
-                   <div style={{flex:1,minWidth:0}}>
-                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10}}>
-                       <div>
-                         <div style={{fontSize:15,fontWeight:700,color:T.text,marginBottom:4}}>{p.vehicle_title||"Untitled Draft"}</div>
-                         <div style={{fontSize:11,color:T.muted}}>{fmtDate(p.created_at)} · by {users.find(u=>u.id===p.created_by)?.first_name||"Unknown"}{p.posted_at&&" · Posted "+fmtDate(p.posted_at)}</div>
-                       </div>
-                       <div style={{display:"flex",gap:8,flexShrink:0,alignItems:"center"}}>
-                         <span style={{fontSize:11,padding:"3px 10px",borderRadius:20,fontWeight:700,background:p.status==="Posted"?"rgba(52,199,89,.15)":"rgba(255,149,0,.15)",color:p.status==="Posted"?"#34C759":"#FF9500",border:"1px solid",borderColor:p.status==="Posted"?"rgba(52,199,89,.3)":"rgba(255,149,0,.3)"}}>{p.status}</span>
-                         <button style={{...btnS,fontSize:11}} onClick={()=>openDraft(null,p)}>✏️</button>
-                         <button style={{...btnS,fontSize:11,color:"#E63946"}} onClick={()=>deletePost(p.id)}>🗑️</button>
-                       </div>
-                     </div>
-                   </div>
-                 </div>
-                 <pre style={{fontSize:12,color:T.muted,lineHeight:1.7,whiteSpace:"pre-wrap",fontFamily:"'DM Sans'",background:T.bg,borderRadius:9,padding:"12px 14px",maxHeight:140,overflow:"hidden"}}>{p.draft_text}</pre>
-                 {p.status!=="Posted"&&(
-                   <button style={{marginTop:12,background:"#34C759",color:"#fff",border:"none",borderRadius:9,padding:"10px 18px",fontFamily:"'DM Sans'",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:8}} onClick={()=>{navigator.clipboard.writeText(p.draft_text).catch(()=>{});window.open("https://www.facebook.com/marketplace/create/vehicle","_blank");sb.from("posts").update({status:"Posted",posted_at:new Date().toISOString()}).eq("id",p.id).then(()=>loadPosts());}}>
-                     📋 Copy & Open Facebook Marketplace
-                   </button>
-                 )}
-               </div>
-             ))}
+            {posts.length===0?<div style={{...card,textAlign:"center",padding:40}}><div style={{fontSize:36,marginBottom:10}}>📝</div><button style={btnP} onClick={()=>openDraft()}>Create First Draft</button></div>:
+            posts.map(p=>(
+              <div key={p.id} style={{...card,marginBottom:12}}>
+                <div style={{display:"flex",gap:12,alignItems:"flex-start",marginBottom:10}}>
+                  {p.vehicle_image&&<img src={p.vehicle_image} alt="" style={{width:100,height:68,objectFit:"cover",borderRadius:7,flexShrink:0}} onError={e=>e.target.style.display="none"}/>}
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
+                      <div>
+                        <div style={{fontSize:14,fontWeight:700,color:T.text,marginBottom:3}}>{p.vehicle_title||"Untitled"}</div>
+                        <div style={{fontSize:11,color:T.muted}}>{fmtDate(p.created_at)} · {users.find(u=>u.id===p.created_by)?.first_name}</div>
+                      </div>
+                      <div style={{display:"flex",gap:6,flexShrink:0,alignItems:"center"}}>
+                        <span style={{fontSize:10,padding:"2px 8px",borderRadius:20,fontWeight:700,background:p.status==="Posted"?"rgba(52,199,89,.15)":"rgba(255,149,0,.15)",color:p.status==="Posted"?"#34C759":"#FF9500",border:"1px solid",borderColor:p.status==="Posted"?"rgba(52,199,89,.3)":"rgba(255,149,0,.3)"}}>{p.status}</span>
+                        <button style={{...btnS,fontSize:11,padding:"3px 8px"}} onClick={()=>openDraft(null,p)}>✏️</button>
+                        <button style={{...btnS,fontSize:11,padding:"3px 8px",color:"#E63946"}} onClick={async()=>{if(!window.confirm("Delete?"))return;await sb.from("posts").delete().eq("id",p.id);setPosts(x=>x.filter(y=>y.id!==p.id));}}>🗑️</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <pre style={{fontSize:11,color:T.muted,whiteSpace:"pre-wrap",fontFamily:"'DM Sans'",background:T.bg,borderRadius:8,padding:"10px 12px",maxHeight:120,overflow:"hidden",lineHeight:1.6}}>{p.draft_text}</pre>
+                {p.status!=="Posted"&&<button style={{marginTop:10,background:"#34C759",color:"#fff",border:"none",borderRadius:8,padding:"9px 16px",fontFamily:"'DM Sans'",fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:6}} onClick={()=>{navigator.clipboard.writeText(p.draft_text).catch(()=>{});window.open("https://www.facebook.com/marketplace/create/vehicle","_blank");sb.from("posts").update({status:"Posted",posted_at:new Date().toISOString()}).eq("id",p.id).then(()=>loadPosts());}}>📋 Copy & Open Marketplace</button>}
+              </div>
+            ))}
           </div>
         )}
 
-        {/* ═══ ACCOUNTS (Admin only) ═══ */}
+        {/* ═══ ACCOUNTS ═══ */}
         {tab==="accounts"&&isAdmin&&(
           <div className="fu">
-            <div style={{marginBottom:18}}>
-              <h2 style={{fontFamily:"'Bebas Neue'",fontSize:26,letterSpacing:2,color:T.text}}>ACCOUNTS</h2>
-              <p style={{fontSize:12,color:T.muted}}>{users.length} registered users · Admin access only</p>
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 390px",gap:18,alignItems:"start"}}>
+            <h2 style={{fontFamily:"'Bebas Neue'",fontSize:24,letterSpacing:2,color:T.text,marginBottom:4}}>ACCOUNTS</h2>
+            <p style={{fontSize:11,color:T.muted,marginBottom:16}}>{users.length} users · Admin only</p>
+            <div className="two-col" style={{display:"grid",gridTemplateColumns:"1fr 360px",gap:14,alignItems:"start"}}>
               <div style={{...card,padding:0,overflow:"hidden"}}>
                 <div style={{overflowX:"auto"}}>
                   <table style={{width:"100%",borderCollapse:"collapse"}}>
                     <thead><tr style={{background:T.bg}}>
-                      {["Name","Email","Location","Role","Status","Actions"].map(h=>(
-                        <th key={h} style={{color:T.muted,borderBottomColor:T.border,padding:"10px 14px",textAlign:"left",fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:".7px"}}>{h}</th>
-                      ))}
+                      {["Name","Email","Location","Role","Status","Actions"].map(h=><th key={h} style={{color:T.muted,borderBottomColor:T.border,padding:"9px 12px",textAlign:"left",fontSize:10,fontWeight:600,textTransform:"uppercase",letterSpacing:".7px"}}>{h}</th>)}
                     </tr></thead>
                     <tbody>
                       {uLoad?<tr><td colSpan={6} style={{color:T.muted,textAlign:"center",padding:20,borderBottomColor:T.border}}>Loading…</td></tr>:
                       users.map((u,i)=>(
                         <tr key={i}>
-                          <td style={{fontWeight:600,borderBottomColor:T.border,color:T.text,padding:"10px 14px",fontSize:13}}>
-                            {u.first_name} {u.last_name}
-                            {u.id===user?.id&&<span style={{fontSize:10,color:T.accent,background:T.accent+"22",padding:"1px 6px",borderRadius:4,marginLeft:4}}>You</span>}
-                          </td>
-                          <td style={{fontSize:12,color:T.muted,fontFamily:"monospace",borderBottomColor:T.border,padding:"10px 14px"}}>{u.email}</td>
-                          <td style={{borderBottomColor:T.border,padding:"10px 14px"}}>
-                            <span style={{fontSize:11,background:T.bg,border:`1px solid ${T.border}`,borderRadius:5,padding:"2px 7px",color:T.text}}>📍 {u.location}</span>
-                          </td>
-                          <td style={{borderBottomColor:T.border,padding:"10px 14px"}}>
-                            <span style={{fontSize:11,background:u.role==="Admin"?"rgba(230,57,70,.14)":u.role==="Manager"?"rgba(255,149,0,.14)":"rgba(10,132,255,.14)",color:u.role==="Admin"?"#E63946":u.role==="Manager"?"#FF9500":"#0A84FF",border:"1px solid",borderColor:u.role==="Admin"?"rgba(230,57,70,.3)":u.role==="Manager"?"rgba(255,149,0,.3)":"rgba(10,132,255,.3)",borderRadius:5,padding:"2px 8px",fontWeight:700}}>{u.role}</span>
-                          </td>
-                          <td style={{borderBottomColor:T.border,padding:"10px 14px"}}>
-                            <span style={{fontSize:12,fontWeight:700,color:u.status==="active"?"#34C759":"#E63946"}}>{u.status==="active"?"● Active":"● Disabled"}</span>
-                          </td>
-                          <td style={{borderBottomColor:T.border,padding:"10px 14px"}}>
-                            {u.id!==user?.id&&(
-                              <div style={{display:"flex",gap:6}}>
-                                <button style={{...btnS,fontSize:11,padding:"4px 9px"}} onClick={()=>{setResetTarget(u);setResetPw("");setResetMsg("");}}>🔑 Reset PW</button>
-                                <button style={{...btnS,fontSize:11,padding:"4px 9px",color:u.status==="active"?"#E63946":"#34C759",borderColor:u.status==="active"?"rgba(230,57,70,.4)":"rgba(52,199,89,.4)"}} onClick={()=>toggleStatus(u)}>
-                                  {u.status==="active"?"🚫 Disable":"✅ Enable"}
-                                </button>
-                              </div>
-                            )}
+                          <td style={{fontWeight:600,borderBottomColor:T.border,color:T.text,padding:"9px 12px",fontSize:12}}>{u.first_name} {u.last_name}{u.id===user?.id&&<span style={{fontSize:9,color:T.accent,background:T.accent+"22",padding:"1px 5px",borderRadius:4,marginLeft:4}}>You</span>}</td>
+                          <td style={{fontSize:11,color:T.muted,fontFamily:"monospace",borderBottomColor:T.border,padding:"9px 12px"}}>{u.email}</td>
+                          <td style={{borderBottomColor:T.border,padding:"9px 12px"}}><span style={{fontSize:10,background:T.bg,border:`1px solid ${T.border}`,borderRadius:4,padding:"2px 6px",color:T.text}}>📍 {u.location}</span></td>
+                          <td style={{borderBottomColor:T.border,padding:"9px 12px"}}><span style={{fontSize:10,fontWeight:700,color:u.role==="Admin"?"#E63946":u.role==="Manager"?"#FF9500":"#0A84FF"}}>{u.role}</span></td>
+                          <td style={{borderBottomColor:T.border,padding:"9px 12px"}}><span style={{fontSize:11,fontWeight:700,color:u.status==="active"?"#34C759":"#E63946"}}>{u.status==="active"?"●":"●"}</span></td>
+                          <td style={{borderBottomColor:T.border,padding:"9px 12px"}}>
+                            {u.id!==user?.id&&<div style={{display:"flex",gap:5}}>
+                              <button style={{...btnS,fontSize:10,padding:"3px 8px"}} onClick={()=>{setResetTarget(u);setResetPw("");setResetMsg("");}}>🔑</button>
+                              <button style={{...btnS,fontSize:10,padding:"3px 8px",color:u.status==="active"?"#E63946":"#34C759"}} onClick={()=>toggleStatus(u)}>{u.status==="active"?"🚫":"✅"}</button>
+                            </div>}
                           </td>
                         </tr>
                       ))}
@@ -961,72 +1144,90 @@ function App(){
                 </div>
               </div>
               <div style={{...card,position:"sticky",top:0}}>
-                <div style={{fontSize:11,fontWeight:700,color:T.accent,marginBottom:14,letterSpacing:1,textTransform:"uppercase"}}>🔐 Create New Account</div>
+                <div style={{fontSize:10,fontWeight:700,color:T.accent,marginBottom:12,letterSpacing:1,textTransform:"uppercase"}}>🔐 Create Account</div>
                 {rOk&&<div style={nOk}>✅ Account created!</div>}
                 {rErr&&<div style={nErr}>⚠️ {rErr}</div>}
-                <div style={{display:"grid",gap:10}}>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
-                    <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>First Name</div><input style={inp} placeholder="First" value={rf.firstName} onChange={e=>{setRf(p=>({...p,firstName:e.target.value}));setRErr("");setROk(false);}}/></div>
-                    <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Last Name</div><input style={inp} placeholder="Last" value={rf.lastName} onChange={e=>{setRf(p=>({...p,lastName:e.target.value}));setRErr("");setROk(false);}}/></div>
+                <div style={{display:"grid",gap:9}}>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                    <div><div style={{fontSize:10,color:T.muted,marginBottom:3}}>First Name</div><input style={inp} value={rf.firstName} onChange={e=>{setRf(p=>({...p,firstName:e.target.value}));setRErr("");setROk(false);}}/></div>
+                    <div><div style={{fontSize:10,color:T.muted,marginBottom:3}}>Last Name</div><input style={inp} value={rf.lastName} onChange={e=>{setRf(p=>({...p,lastName:e.target.value}));setRErr("");setROk(false);}}/></div>
                   </div>
-                  <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Work Email</div><input style={inp} placeholder="name@houseofcars.com" value={rf.email} onChange={e=>{setRf(p=>({...p,email:e.target.value}));setRErr("");setROk(false);}}/></div>
-                  <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Location</div>
-                    <select style={inp} value={rf.location} onChange={e=>setRf(p=>({...p,location:e.target.value}))}>
-                      <option value="">Select…</option>
-                      {LOCS.map(l=><option key={l} value={l}>{l}</option>)}
-                    </select>
+                  <div><div style={{fontSize:10,color:T.muted,marginBottom:3}}>Email</div><input style={inp} placeholder="name@houseofcars.com" value={rf.email} onChange={e=>{setRf(p=>({...p,email:e.target.value}));setRErr("");setROk(false);}}/></div>
+                  <div><div style={{fontSize:10,color:T.muted,marginBottom:3}}>Location</div><select style={inp} value={rf.location} onChange={e=>setRf(p=>({...p,location:e.target.value}))}><option value="">Select…</option>{LOCS.map(l=><option key={l}>{l}</option>)}</select></div>
+                  <div><div style={{fontSize:10,color:T.muted,marginBottom:4}}>Role</div>
+                    <div style={{display:"flex",gap:6}}>{["Sales","Manager","Admin"].map(r=><button key={r} onClick={()=>setRf(p=>({...p,role:r}))} style={{flex:1,background:rf.role===r?T.accent+"22":"rgba(128,128,128,.08)",color:rf.role===r?T.accent:T.muted,border:"1px solid",borderColor:rf.role===r?T.accent+"44":T.border,borderRadius:7,padding:"5px",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans'"}}>{r}</button>)}</div>
                   </div>
-                  <div><div style={{fontSize:11,color:T.muted,marginBottom:5}}>Role</div>
-                    <div style={{display:"flex",gap:7}}>
-                      {["Sales","Manager","Admin"].map(r=>(
-                        <button key={r} onClick={()=>setRf(p=>({...p,role:r}))} style={{flex:1,background:rf.role===r?T.accent+"22":"rgba(128,128,128,.08)",color:rf.role===r?T.accent:T.muted,border:"1px solid",borderColor:rf.role===r?T.accent+"44":T.border,borderRadius:7,padding:"6px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans'"}}>{r}</button>
-                      ))}
-                    </div>
-                  </div>
-                  <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Temp Password</div><input style={inp} type="password" placeholder="Min. 8 chars" value={rf.password} onChange={e=>setRf(p=>({...p,password:e.target.value}))}/></div>
-                  <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Confirm</div><input style={inp} type="password" placeholder="Repeat" value={rf.confirm} onChange={e=>setRf(p=>({...p,confirm:e.target.value}))}/></div>
-                  <button style={{...btnP,display:"flex",alignItems:"center",justifyContent:"center",gap:8}} onClick={doRegister} disabled={rLoad}>
-                    {rLoad?<><span className="spin"></span>Creating…</>:"Create Account"}
-                  </button>
+                  <div><div style={{fontSize:10,color:T.muted,marginBottom:3}}>Password</div><input style={inp} type="password" placeholder="Min. 8 chars" value={rf.password} onChange={e=>setRf(p=>({...p,password:e.target.value}))}/></div>
+                  <div><div style={{fontSize:10,color:T.muted,marginBottom:3}}>Confirm</div><input style={inp} type="password" value={rf.confirm} onChange={e=>setRf(p=>({...p,confirm:e.target.value}))}/></div>
+                  <button style={{...btnP,display:"flex",alignItems:"center",justifyContent:"center",gap:6,fontSize:12}} onClick={doRegister} disabled={rLoad}>{rLoad?<><span className="spin"></span>Creating…</>:"Create Account"}</button>
                 </div>
               </div>
             </div>
           </div>
         )}
-
       </div>{/* end content */}
 
-      {/* ═══ MODALS ═══ */}
+      {/* ══ CHAT PANEL ══ */}
+      {chatOpen&&(
+        <div style={{position:"fixed",right:0,bottom:0,top:52,width:300,background:T.surface,borderLeft:`1px solid ${T.border}`,display:"flex",flexDirection:"column",zIndex:100,animation:"slideIn .2s ease"}}>
+          <div style={{padding:"12px 14px",borderBottom:`1px solid ${T.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
+            <div>
+              <div style={{fontSize:13,fontWeight:700,color:T.text}}>💬 {user?.location} Chat</div>
+              <div style={{fontSize:10,color:T.muted}}>{onlineLoc.length} other reps at this location</div>
+            </div>
+            <button style={{background:"none",border:"none",color:T.muted,cursor:"pointer",fontSize:18}} onClick={()=>setChatOpen(false)}>×</button>
+          </div>
+          <div style={{flex:1,overflowY:"auto",padding:"10px 12px",display:"flex",flexDirection:"column",gap:6}}>
+            {chatLoad?<div style={{color:T.muted,fontSize:12}}>Loading…</div>:
+            chatMsgs.length===0?<div style={{color:T.muted,fontSize:12,textAlign:"center",marginTop:20}}>No messages yet. Say hi! 👋</div>:
+            chatMsgs.map(m=>{
+              const mine=m.user_id===user?.id;
+              return(
+                <div key={m.id} style={{display:"flex",flexDirection:"column",alignItems:mine?"flex-end":"flex-start"}}>
+                  {!mine&&<div style={{fontSize:10,color:T.muted,marginBottom:2}}>{m.user_name}</div>}
+                  <div style={{background:mine?T.accent:T.bg,color:mine?"#fff":T.text,borderRadius:mine?"12px 12px 2px 12px":"12px 12px 12px 2px",padding:"7px 10px",maxWidth:"85%",fontSize:13,lineHeight:1.4}}>{m.message}</div>
+                  <div style={{fontSize:9,color:T.muted,marginTop:2}}>{fmtTime(m.created_at)}</div>
+                </div>
+              );
+            })}
+            <div ref={chatEndRef}></div>
+          </div>
+          <div style={{padding:"8px 10px",borderTop:`1px solid ${T.border}`,display:"flex",gap:6,flexShrink:0}}>
+            <input style={{...inp,flex:1,fontSize:12,padding:"8px 10px"}} placeholder="Message your team…" value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendChat()}/>
+            <button style={{...btnP,padding:"8px 12px",fontSize:13,flexShrink:0}} onClick={sendChat}>➤</button>
+          </div>
+        </div>
+      )}
+
+      {/* ══ MODALS ══ */}
 
       {/* Add Client */}
       {addC&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setAddC(false)}>
-          <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:18,padding:28,width:580,maxWidth:"100%",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
-              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:22,letterSpacing:2,color:T.text}}>ADD NEW CLIENT</h3>
+        <div className="overlay-mobile" style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setAddC(false)}>
+          <div className="modal-inner" style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:18,padding:24,width:560,maxWidth:"100%",maxHeight:"92vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:20,letterSpacing:2,color:T.text}}>ADD NEW CLIENT</h3>
               <button style={{background:"none",border:"none",color:T.muted,cursor:"pointer",fontSize:22}} onClick={()=>setAddC(false)}>×</button>
             </div>
-            <div style={{display:"grid",gap:12}}>
-              <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Full Name *</div><input style={inp} placeholder="Full name" value={cf.name} onChange={e=>setCf(p=>({...p,name:e.target.value}))}/></div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-                <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Phone</div><input style={inp} placeholder="403-555-0000" value={cf.phone} onChange={e=>setCf(p=>({...p,phone:e.target.value}))}/></div>
-                <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Email</div><input style={inp} type="email" placeholder="client@email.com" value={cf.email} onChange={e=>setCf(p=>({...p,email:e.target.value}))}/></div>
+            <div style={{display:"grid",gap:10}}>
+              <div><div style={{fontSize:11,color:T.muted,marginBottom:3}}>Full Name *</div><input style={inp} value={cf.name} onChange={e=>setCf(p=>({...p,name:e.target.value}))}/></div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
+                <div><div style={{fontSize:11,color:T.muted,marginBottom:3}}>Phone</div><input style={inp} placeholder="403-555-0000" value={cf.phone} onChange={e=>setCf(p=>({...p,phone:e.target.value}))}/></div>
+                <div><div style={{fontSize:11,color:T.muted,marginBottom:3}}>Email</div><input style={inp} type="email" value={cf.email} onChange={e=>setCf(p=>({...p,email:e.target.value}))}/></div>
               </div>
-              <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Location / Area</div><input style={inp} placeholder="e.g. Calgary NW" value={cf.location} onChange={e=>setCf(p=>({...p,location:e.target.value}))}/></div>
-              <div><div style={{fontSize:11,color:T.muted,marginBottom:5}}>Status</div>
-                <div style={{display:"flex",gap:8}}>
-                  {["Hot","Warm","Cold"].map(s=>(
-                    <button key={s} onClick={()=>setCf(p=>({...p,status:s}))} style={{flex:1,background:cf.status===s?STATUS_C[s]:"rgba(128,128,128,.08)",color:cf.status===s?"#fff":T.muted,border:"1px solid",borderColor:cf.status===s?STATUS_C[s]:T.border,borderRadius:7,padding:"9px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans'"}}>{s}</button>
-                  ))}
+              <div><div style={{fontSize:11,color:T.muted,marginBottom:3}}>Area</div><input style={inp} placeholder="e.g. Calgary NW" value={cf.location} onChange={e=>setCf(p=>({...p,location:e.target.value}))}/></div>
+              <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Status</div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:5}}>
+                  {STATUSES.map(s=><button key={s.label} onClick={()=>setCf(p=>({...p,status:s.label}))} style={{background:cf.status===s.label?s.color+"33":"rgba(128,128,128,.06)",color:cf.status===s.label?s.color:T.muted,border:`1px solid ${cf.status===s.label?s.color+"55":T.border}`,borderRadius:7,padding:"5px 4px",fontSize:10,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans'",textAlign:"center"}}>{s.icon} {s.label}</button>)}
                 </div>
               </div>
-              <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Interested In</div>
+              <div><div style={{fontSize:11,color:T.muted,marginBottom:3}}>Interested In</div>
                 <select style={inp} value={cf.interested_in} onChange={e=>{const v=inv.find(x=>x.year+" "+x.make+" "+x.model===e.target.value);setCf(p=>({...p,interested_in:e.target.value,paired_vehicle_stock:v?.stock||""}));}}>
                   <option value="">Select a vehicle…</option>
                   {inv.slice(0,150).map((v,i)=><option key={i} value={v.year+" "+v.make+" "+v.model}>{v.year} {v.make} {v.model} — {fmtCur(v.price)} · {v.location}</option>)}
                 </select>
               </div>
-              <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Notes</div><textarea style={{...inp,minHeight:80,resize:"vertical"}} placeholder="Financing, preferences, follow-up notes…" value={cf.notes} onChange={e=>setCf(p=>({...p,notes:e.target.value}))}/></div>
+              <div><div style={{fontSize:11,color:T.muted,marginBottom:3}}>Notes</div><textarea style={{...inp,minHeight:70,resize:"vertical"}} value={cf.notes} onChange={e=>setCf(p=>({...p,notes:e.target.value}))}/></div>
               <button style={btnP} onClick={saveClient}>Save Client</button>
             </div>
           </div>
@@ -1035,27 +1236,25 @@ function App(){
 
       {/* Edit Client */}
       {editC&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setEditC(false)}>
-          <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:18,padding:28,width:540,maxWidth:"100%",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
-              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:22,letterSpacing:2,color:T.text}}>EDIT CLIENT</h3>
+        <div className="overlay-mobile" style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setEditC(false)}>
+          <div className="modal-inner" style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:18,padding:24,width:520,maxWidth:"100%",maxHeight:"92vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:20,letterSpacing:2,color:T.text}}>EDIT CLIENT</h3>
               <button style={{background:"none",border:"none",color:T.muted,cursor:"pointer",fontSize:22}} onClick={()=>setEditC(false)}>×</button>
             </div>
-            <div style={{display:"grid",gap:12}}>
-              <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Full Name *</div><input style={inp} value={cf.name} onChange={e=>setCf(p=>({...p,name:e.target.value}))}/></div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-                <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Phone</div><input style={inp} value={cf.phone} onChange={e=>setCf(p=>({...p,phone:e.target.value}))}/></div>
-                <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Email</div><input style={inp} type="email" value={cf.email} onChange={e=>setCf(p=>({...p,email:e.target.value}))}/></div>
+            <div style={{display:"grid",gap:10}}>
+              <div><div style={{fontSize:11,color:T.muted,marginBottom:3}}>Full Name *</div><input style={inp} value={cf.name} onChange={e=>setCf(p=>({...p,name:e.target.value}))}/></div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
+                <div><div style={{fontSize:11,color:T.muted,marginBottom:3}}>Phone</div><input style={inp} value={cf.phone} onChange={e=>setCf(p=>({...p,phone:e.target.value}))}/></div>
+                <div><div style={{fontSize:11,color:T.muted,marginBottom:3}}>Email</div><input style={inp} type="email" value={cf.email} onChange={e=>setCf(p=>({...p,email:e.target.value}))}/></div>
               </div>
-              <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Location</div><input style={inp} value={cf.location} onChange={e=>setCf(p=>({...p,location:e.target.value}))}/></div>
-              <div><div style={{fontSize:11,color:T.muted,marginBottom:5}}>Status</div>
-                <div style={{display:"flex",gap:8}}>
-                  {["Hot","Warm","Cold"].map(s=>(
-                    <button key={s} onClick={()=>setCf(p=>({...p,status:s}))} style={{flex:1,background:cf.status===s?STATUS_C[s]:"rgba(128,128,128,.08)",color:cf.status===s?"#fff":T.muted,border:"1px solid",borderColor:cf.status===s?STATUS_C[s]:T.border,borderRadius:7,padding:"9px",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans'"}}>{s}</button>
-                  ))}
+              <div><div style={{fontSize:11,color:T.muted,marginBottom:3}}>Area</div><input style={inp} value={cf.location} onChange={e=>setCf(p=>({...p,location:e.target.value}))}/></div>
+              <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Status</div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:5}}>
+                  {STATUSES.map(s=><button key={s.label} onClick={()=>setCf(p=>({...p,status:s.label}))} style={{background:cf.status===s.label?s.color+"33":"rgba(128,128,128,.06)",color:cf.status===s.label?s.color:T.muted,border:`1px solid ${cf.status===s.label?s.color+"55":T.border}`,borderRadius:7,padding:"5px 4px",fontSize:10,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans'",textAlign:"center"}}>{s.icon} {s.label}</button>)}
                 </div>
               </div>
-              <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Notes</div><textarea style={{...inp,minHeight:80,resize:"vertical"}} value={cf.notes} onChange={e=>setCf(p=>({...p,notes:e.target.value}))}/></div>
+              <div><div style={{fontSize:11,color:T.muted,marginBottom:3}}>Notes</div><textarea style={{...inp,minHeight:70,resize:"vertical"}} value={cf.notes} onChange={e=>setCf(p=>({...p,notes:e.target.value}))}/></div>
               <button style={btnP} onClick={updateClient}>Save Changes</button>
             </div>
           </div>
@@ -1064,23 +1263,23 @@ function App(){
 
       {/* Pair Vehicle */}
       {pairModal&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>{setPairModal(null);setVSearch("");}}>
-          <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:18,padding:28,width:580,maxWidth:"100%",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:20,letterSpacing:2,color:T.text}}>PAIR VEHICLE — {pairModal.name?.toUpperCase()}</h3>
+        <div className="overlay-mobile" style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>{setPairModal(null);setVSearch("");}}>
+          <div className="modal-inner" style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:18,padding:24,width:580,maxWidth:"100%",maxHeight:"92vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:18,letterSpacing:2,color:T.text}}>PAIR VEHICLE — {pairModal.name?.toUpperCase()}</h3>
               <button style={{background:"none",border:"none",color:T.muted,cursor:"pointer",fontSize:22}} onClick={()=>{setPairModal(null);setVSearch("");}}>×</button>
             </div>
-            <input style={{...inp,marginBottom:12}} placeholder="🔍 Search make, model, year, stock, location…" value={vSearch} onChange={e=>setVSearch(e.target.value)} autoFocus/>
-            <div style={{display:"grid",gap:8,maxHeight:420,overflowY:"auto"}}>
+            <input style={{...inp,marginBottom:10}} placeholder="🔍 Stock #, make, model, year…" value={vSearch} onChange={e=>setVSearch(e.target.value)} autoFocus/>
+            <div style={{display:"grid",gap:7,maxHeight:420,overflowY:"auto"}}>
               {srchV.map((v,i)=>(
-                <div key={i} onClick={()=>pairVehicle(pairModal,v)} style={{display:"flex",alignItems:"center",gap:12,background:pairModal.paired_vehicle_stock===v.stock?T.accent+"22":T.bg,border:`1px solid ${pairModal.paired_vehicle_stock===v.stock?T.accent:T.border}`,borderRadius:10,padding:"11px 14px",cursor:"pointer",transition:"all .15s"}}>
-                  <span style={{fontSize:22,flexShrink:0}}>{typeEmoji(v.type)}</span>
-                  {v.image&&<img src={v.image} alt="" style={{width:60,height:40,objectFit:"cover",borderRadius:5,flexShrink:0}} onError={e=>e.target.style.display="none"}/>}
+                <div key={i} onClick={()=>pairVehicle(pairModal,v)} style={{display:"flex",alignItems:"center",gap:10,background:pairModal.paired_vehicle_stock===v.stock?T.accent+"22":T.bg,border:`1px solid ${pairModal.paired_vehicle_stock===v.stock?T.accent:T.border}`,borderRadius:9,padding:"10px 12px",cursor:"pointer"}}>
+                  <span style={{fontSize:20,flexShrink:0}}>{typeEmoji(v.type)}</span>
+                  {v.image&&<img src={v.image} alt="" style={{width:54,height:36,objectFit:"cover",borderRadius:4,flexShrink:0}} onError={e=>e.target.style.display="none"}/>}
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontSize:13,fontWeight:600,color:T.text}}>{v.year} {v.make} {v.model}</div>
                     <div style={{fontSize:11,color:T.muted}}>#{v.stock} · {v.location} · {v.mileage}</div>
                   </div>
-                  <span style={{fontSize:14,fontWeight:700,color:T.accent,flexShrink:0}}>{fmtCur(v.price)}</span>
+                  <span style={{fontSize:13,fontWeight:700,color:T.accent,flexShrink:0}}>{fmtCur(v.price)}</span>
                 </div>
               ))}
             </div>
@@ -1088,58 +1287,93 @@ function App(){
         </div>
       )}
 
+      {/* Vehicle Profile / Photo Upload */}
+      {selVehicle&&(
+        <div className="overlay-mobile" style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setSelVehicle(null)}>
+          <div className="modal-inner" style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:18,padding:24,width:620,maxWidth:"100%",maxHeight:"92vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:20,letterSpacing:2,color:T.text}}>{selVehicle.year} {selVehicle.make} {selVehicle.model}</h3>
+              <button style={{background:"none",border:"none",color:T.muted,cursor:"pointer",fontSize:22}} onClick={()=>setSelVehicle(null)}>×</button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14,fontSize:13}}>
+              {[["Stock #",selVehicle.stock],["Price",fmtCur(selVehicle.price)+" + GST"],["Year",selVehicle.year],["Make",selVehicle.make],["Model",selVehicle.model],["KM",selVehicle.mileage],["Colour",selVehicle.color||"—"],["Location","📍 "+selVehicle.location],["Type",selVehicle.type||"—"],["Condition",selVehicle.condition]].map(([k,v])=>(
+                <div key={k} style={{background:T.bg,borderRadius:7,padding:"7px 10px"}}>
+                  <div style={{fontSize:10,color:T.muted,marginBottom:2}}>{k}</div>
+                  <div style={{fontSize:13,fontWeight:600,color:T.text}}>{v}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Photos */}
+            <div style={{marginBottom:14}}>
+              <div style={{fontSize:11,color:T.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Vehicle Photos</div>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>
+                {selVehicle.image&&<img src={selVehicle.image} alt="" style={{width:120,height:80,objectFit:"cover",borderRadius:7}} onError={e=>e.target.style.display="none"}/>}
+                {(vPhotos[selVehicle.stock]||[]).map((p,i)=>(
+                  <img key={i} src={p.url} alt="" style={{width:120,height:80,objectFit:"cover",borderRadius:7}} onError={e=>e.target.style.display="none"}/>
+                ))}
+              </div>
+              <label style={{...btnS,display:"inline-flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:12}}>
+                {photoUploading?<><span className="spin"></span>Uploading…</>:"📷 Upload Photos"}
+                <input type="file" accept="image/*" multiple style={{display:"none"}} onChange={e=>handlePhotoUpload(e,selVehicle.stock)} disabled={photoUploading}/>
+              </label>
+              <div style={{fontSize:11,color:T.muted,marginTop:6}}>Photos are shared with all reps and available when drafting ads.</div>
+            </div>
+
+            <div style={{display:"flex",gap:8}}>
+              <button style={btnP} onClick={()=>{setSelVehicle(null);openDraft(selVehicle);}}>📝 Draft Ad</button>
+              {selVehicle.listingUrl&&<a href={selVehicle.listingUrl} target="_blank" rel="noopener noreferrer" style={{...btnS,textDecoration:"none",display:"inline-flex",alignItems:"center",gap:4}}>↗ View Listing</a>}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Ad Draft Modal */}
       {draftOpen&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setDraftOpen(false)}>
-          <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:18,padding:28,width:760,maxWidth:"100%",maxHeight:"94vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
-              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:22,letterSpacing:2,color:T.text}}>📝 {editPost?"EDIT AD DRAFT":"NEW AD DRAFT"}</h3>
+        <div className="overlay-mobile" style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setDraftOpen(false)}>
+          <div className="modal-inner" style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:18,padding:24,width:760,maxWidth:"100%",maxHeight:"94vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:20,letterSpacing:2,color:T.text}}>📝 {editPost?"EDIT DRAFT":"NEW AD DRAFT"}</h3>
               <button style={{background:"none",border:"none",color:T.muted,cursor:"pointer",fontSize:22}} onClick={()=>setDraftOpen(false)}>×</button>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+            <div className="two-col" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
               <div>
-                {/* Vehicle picker */}
-                <div style={{marginBottom:12}}>
-                  <div style={{fontSize:11,color:T.muted,marginBottom:6}}>Vehicle {draftV&&<span style={{color:T.accent}}>· {draftV.year} {draftV.make} {draftV.model}</span>}</div>
-                  <input style={inp} placeholder="🔍 Search inventory to auto-fill…" value={draftSearch} onChange={e=>setDraftSearch(e.target.value)}/>
+                <div style={{marginBottom:10}}>
+                  <div style={{fontSize:11,color:T.muted,marginBottom:5}}>Vehicle {draftV&&<span style={{color:T.accent}}>· {draftV.year} {draftV.make} {draftV.model}</span>}</div>
+                  <input style={inp} placeholder="🔍 Stock #, make, model…" value={draftSearch} onChange={e=>setDraftSearch(e.target.value)}/>
                   {draftSearch&&(
-                    <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:9,maxHeight:180,overflowY:"auto",marginTop:6}}>
-                      {srchV.length===0&&<div style={{padding:14,color:T.muted,fontSize:13}}>No matches.</div>}
+                    <div style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,maxHeight:180,overflowY:"auto",marginTop:6}}>
                       {srchV.map((v,i)=>(
-                        <div key={i} onClick={()=>{setDraftV(v);setDraftTitle(v.year+" "+v.make+" "+v.model);setDraftImg(v.image||"");setDraftText(buildAd(v,draftFeat,draftIntro));setDraftSearch("");}} style={{padding:"10px 14px",cursor:"pointer",borderBottom:`1px solid ${T.border}`,fontSize:13,display:"flex",gap:10,alignItems:"center"}}>
-                          {v.image&&<img src={v.image} alt="" style={{width:50,height:34,objectFit:"cover",borderRadius:4,flexShrink:0}} onError={e=>e.target.style.display="none"}/>}
-                          <div><div style={{color:T.text,fontWeight:600}}>{v.year} {v.make} {v.model}</div><div style={{color:T.muted,fontSize:11}}>#{v.stock} · {fmtCur(v.price)} · {v.location}</div></div>
+                        <div key={i} onClick={()=>{setDraftV(v);setDraftTitle(v.year+" "+v.make+" "+v.model);setDraftImg(v.image||(vPhotos[v.stock]?.[0]?.url)||"");setDraftText(buildAd(v,draftFeat,draftIntro));setDraftSearch("");}} style={{padding:"9px 12px",cursor:"pointer",borderBottom:`1px solid ${T.border}`,fontSize:12,display:"flex",gap:8,alignItems:"center"}}>
+                          {(v.image||vPhotos[v.stock]?.[0]?.url)&&<img src={v.image||vPhotos[v.stock]?.[0]?.url} alt="" style={{width:46,height:30,objectFit:"cover",borderRadius:4,flexShrink:0}} onError={e=>e.target.style.display="none"}/>}
+                          <div><div style={{color:T.text,fontWeight:600}}>{v.year} {v.make} {v.model}</div><div style={{color:T.muted,fontSize:10}}>#{v.stock} · {fmtCur(v.price)} · {v.location}</div></div>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
-                {draftImg&&<img src={draftImg} alt="" style={{width:"100%",height:130,objectFit:"cover",borderRadius:10,marginBottom:12}} onError={e=>e.target.style.display="none"}/>}
-                <div style={{marginBottom:10}}>
-                  <div style={{fontSize:11,color:T.muted,marginBottom:4}}>Vehicle Features (one per line)</div>
-                  <textarea style={{...inp,minHeight:110,fontSize:12,resize:"vertical"}} placeholder={"• All-Wheel Drive\n• Leather Interior\n• Heated Seats\n…"} value={draftFeat} onChange={e=>{setDraftFeat(e.target.value);if(draftV)setDraftText(buildAd(draftV,e.target.value,draftIntro));}}/>
+                {draftImg&&<img src={draftImg} alt="" style={{width:"100%",height:120,objectFit:"cover",borderRadius:9,marginBottom:10}} onError={e=>e.target.style.display="none"}/>}
+                <div style={{marginBottom:9}}>
+                  <div style={{fontSize:11,color:T.muted,marginBottom:4}}>Vehicle Features <span style={{color:"#FF9500"}}>(fill in actual features!)</span></div>
+                  <textarea style={{...inp,minHeight:120,fontSize:12,resize:"vertical"}} placeholder={"• [Enter the actual features]\n• Heated Seats\n• Backup Camera\n• …"} value={draftFeat} onChange={e=>{setDraftFeat(e.target.value);if(draftV)setDraftText(buildAd(draftV,e.target.value,draftIntro));}}/>
                 </div>
-                <div style={{marginBottom:10}}>
+                <div style={{marginBottom:9}}>
                   <div style={{fontSize:11,color:T.muted,marginBottom:4}}>Custom Opening (optional)</div>
-                  <textarea style={{...inp,minHeight:70,fontSize:12,resize:"vertical"}} placeholder="Looking for a great SUV without breaking the bank?…" value={draftIntro} onChange={e=>{setDraftIntro(e.target.value);if(draftV)setDraftText(buildAd(draftV,draftFeat,e.target.value));}}/>
+                  <textarea style={{...inp,minHeight:60,fontSize:12,resize:"vertical"}} placeholder="Looking for the perfect truck for Alberta winters?…" value={draftIntro} onChange={e=>{setDraftIntro(e.target.value);if(draftV)setDraftText(buildAd(draftV,draftFeat,e.target.value));}}/>
                 </div>
-                <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Ad Title</div>
-                  <input style={inp} placeholder="2022 Ford F-150 XLT — HOC Airdrie" value={draftTitle} onChange={e=>setDraftTitle(e.target.value)}/>
-                </div>
+                <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>Ad Title</div><input style={inp} placeholder="2022 Ford F-150 — HOC Airdrie" value={draftTitle} onChange={e=>setDraftTitle(e.target.value)}/></div>
               </div>
               <div style={{display:"flex",flexDirection:"column"}}>
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
                   <div style={{fontSize:11,color:T.muted}}>Ad Text (HOC Template)</div>
-                  <span style={{fontSize:11,color:T.muted}}>{draftText.length} chars</span>
+                  <span style={{fontSize:10,color:T.muted}}>{draftText.length} chars</span>
                 </div>
-                <textarea style={{...inp,flex:1,minHeight:430,fontSize:12,lineHeight:1.75,resize:"none"}} value={draftText} onChange={e=>setDraftText(e.target.value)} placeholder="Select a vehicle to auto-generate the HOC template."/>
+                <textarea style={{...inp,flex:1,minHeight:420,fontSize:12,lineHeight:1.75,resize:"none"}} value={draftText} onChange={e=>setDraftText(e.target.value)} placeholder="Select a vehicle to generate the HOC template."/>
               </div>
             </div>
-            <div style={{...nInfo,marginTop:14,fontSize:12}}>
-              📋 <strong>"Copy & Open Marketplace"</strong> copies your ad to clipboard and opens Facebook Marketplace. Paste and fill in vehicle details to publish.
-            </div>
-            <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:14}}>
-              <button style={{flex:2,background:"#34C759",color:"#fff",border:"none",borderRadius:9,padding:"11px 18px",fontFamily:"'DM Sans'",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}} onClick={openMarketplace}>📋 Copy & Open Facebook Marketplace</button>
+            <div style={{...nInfo,marginTop:12,fontSize:12}}>📋 "Copy & Open Marketplace" copies your ad and opens Facebook Marketplace. Paste and fill in vehicle details.</div>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:12}}>
+              <button style={{flex:2,background:"#34C759",color:"#fff",border:"none",borderRadius:9,padding:"11px 16px",fontFamily:"'DM Sans'",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}} onClick={openMarketplace}>📋 Copy & Open Marketplace</button>
               <button style={{...btnS,flex:1}} onClick={()=>saveDraft("Draft")}>💾 Save Draft</button>
               <button style={btnS} onClick={()=>setDraftOpen(false)}>Cancel</button>
             </div>
@@ -1149,16 +1383,13 @@ function App(){
 
       {/* Reset Password */}
       {resetTarget&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setResetTarget(null)}>
-          <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:18,padding:28,width:400,maxWidth:"100%"}} onClick={e=>e.stopPropagation()}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:20,letterSpacing:2,color:T.text}}>RESET PASSWORD</h3>
-              <button style={{background:"none",border:"none",color:T.muted,cursor:"pointer",fontSize:22}} onClick={()=>setResetTarget(null)}>×</button>
-            </div>
-            <p style={{fontSize:13,color:T.muted,marginBottom:16,lineHeight:1.6}}>Set a new password for <strong style={{color:T.text}}>{resetTarget.first_name} {resetTarget.last_name}</strong>. Communicate it to them directly.</p>
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setResetTarget(null)}>
+          <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:18,padding:24,width:380,maxWidth:"100%"}} onClick={e=>e.stopPropagation()}>
+            <h3 style={{fontFamily:"'Bebas Neue'",fontSize:18,letterSpacing:2,color:T.text,marginBottom:12}}>RESET PASSWORD</h3>
+            <p style={{fontSize:13,color:T.muted,marginBottom:14}}>Set new password for <strong style={{color:T.text}}>{resetTarget.first_name} {resetTarget.last_name}</strong>. Tell them directly.</p>
             {resetMsg&&<div style={resetMsg.startsWith("✅")?nOk:nErr}>{resetMsg}</div>}
-            <div style={{display:"grid",gap:12}}>
-              <div><div style={{fontSize:11,color:T.muted,marginBottom:4}}>New Password</div><input style={inp} type="password" placeholder="Min. 8 chars" value={resetPw} onChange={e=>{setResetPw(e.target.value);setResetMsg("");}}/></div>
+            <div style={{display:"grid",gap:10}}>
+              <input style={inp} type="password" placeholder="Min. 8 chars" value={resetPw} onChange={e=>{setResetPw(e.target.value);setResetMsg("");}}/>
               <button style={btnP} onClick={doResetPw}>Set New Password</button>
             </div>
           </div>
@@ -1167,33 +1398,57 @@ function App(){
 
       {/* Settings */}
       {settingsOpen&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setSettingsOpen(false)}>
-          <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:18,padding:28,width:500,maxWidth:"100%"}} onClick={e=>e.stopPropagation()}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:22,letterSpacing:2,color:T.text}}>⚙️ SETTINGS</h3>
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setSettingsOpen(false)}>
+          <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:18,padding:24,width:520,maxWidth:"100%",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
+              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:20,letterSpacing:2,color:T.text}}>⚙️ SETTINGS</h3>
               <button style={{background:"none",border:"none",color:T.muted,cursor:"pointer",fontSize:22}} onClick={()=>setSettingsOpen(false)}>×</button>
             </div>
-            <div style={{fontSize:11,color:T.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>Colour Theme</div>
-            <p style={{fontSize:12,color:T.muted,marginBottom:16}}>Your theme saves to your account and works on any device.</p>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:22}}>
-              {Object.entries(THEMES).map(([key,t])=>(
-                <button key={key} onClick={()=>saveTheme(key)} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:themeKey===key?t.accent+"22":T.bg,border:`2px solid ${themeKey===key?t.accent:T.border}`,borderRadius:10,cursor:"pointer",fontFamily:"'DM Sans'",textAlign:"left",transition:"all .2s"}}>
-                  <div style={{width:28,height:28,borderRadius:6,background:t.bg,border:`2px solid ${t.accent}`,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <div style={{width:12,height:12,borderRadius:"50%",background:t.accent}}></div>
-                  </div>
-                  <div>
-                    <div style={{fontSize:13,fontWeight:600,color:T.text}}>{t.name}</div>
-                    <div style={{fontSize:10,color:T.muted}}>{t.accent}</div>
-                  </div>
-                  {themeKey===key&&<span style={{marginLeft:"auto",color:t.accent,fontSize:18}}>✓</span>}
-                </button>
-              ))}
+
+            {/* Edit Name */}
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:11,color:T.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>Your Name</div>
+              {nameMsg&&<div style={nameMsg.startsWith("✅")?{...nOk,marginBottom:10}:{...nErr,marginBottom:10}}>{nameMsg}</div>}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+                <div><div style={{fontSize:11,color:T.muted,marginBottom:3}}>First Name</div><input style={inp} value={editName.first} onChange={e=>setEditName(p=>({...p,first:e.target.value}))} placeholder={user?.first_name}/></div>
+                <div><div style={{fontSize:11,color:T.muted,marginBottom:3}}>Last Name</div><input style={inp} value={editName.last} onChange={e=>setEditName(p=>({...p,last:e.target.value}))} placeholder={user?.last_name}/></div>
+              </div>
+              <button style={{...btnP,fontSize:12,padding:"8px 14px"}} onClick={saveProfile}>Save Name</button>
             </div>
-            <div style={{borderTop:`1px solid ${T.border}`,paddingTop:16}}>
-              <div style={{fontSize:11,color:T.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>Your Account</div>
-              <div style={{fontSize:14,fontWeight:600,color:T.text,marginBottom:4}}>{user?.first_name} {user?.last_name}</div>
-              <div style={{fontSize:12,color:T.muted,marginBottom:4}}>{user?.email}</div>
-              <div style={{fontSize:12,color:T.muted}}>{user?.role} · {user?.location}</div>
+
+            {/* Theme presets */}
+            <div style={{marginBottom:16}}>
+              <div style={{fontSize:11,color:T.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>Colour Theme</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
+                {Object.entries(THEMES).map(([key,t])=>(
+                  <button key={key} onClick={()=>applyTheme(key,customAccent&&customAccent!==THEMES[key].accent?customAccent:"")} style={{display:"flex",alignItems:"center",gap:9,padding:"10px 12px",background:themeKey===key?t.accent+"22":T.bg,border:`2px solid ${themeKey===key?t.accent:T.border}`,borderRadius:9,cursor:"pointer",fontFamily:"'DM Sans'",textAlign:"left"}}>
+                    <div style={{width:24,height:24,borderRadius:6,background:t.bg,border:`2px solid ${t.accent}`,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      <div style={{width:10,height:10,borderRadius:"50%",background:t.accent}}></div>
+                    </div>
+                    <div style={{fontSize:12,fontWeight:600,color:T.text}}>{t.name}</div>
+                    {themeKey===key&&<span style={{marginLeft:"auto",color:t.accent,fontSize:16}}>✓</span>}
+                  </button>
+                ))}
+              </div>
+
+              {/* Custom accent colour */}
+              <div>
+                <div style={{fontSize:11,color:T.muted,marginBottom:6}}>Custom Accent Colour</div>
+                <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                  <input type="color" value={accentInput} onChange={e=>setAccentInput(e.target.value)} style={{width:44,height:36,borderRadius:7,border:`1px solid ${T.border}`,background:"none",cursor:"pointer",padding:2}}/>
+                  <input style={{...inp,flex:1,fontFamily:"monospace",fontSize:12}} placeholder="#E63946" value={accentInput} onChange={e=>setAccentInput(e.target.value)}/>
+                  <button style={{...btnP,padding:"8px 14px",fontSize:12,flexShrink:0}} onClick={()=>applyTheme(themeKey,accentInput)}>Apply</button>
+                </div>
+                <div style={{fontSize:11,color:T.muted,marginTop:5}}>Pick any hex colour. Works on top of any theme preset.</div>
+              </div>
+            </div>
+
+            {/* Account info */}
+            <div style={{borderTop:`1px solid ${T.border}`,paddingTop:14}}>
+              <div style={{fontSize:11,color:T.muted,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Account</div>
+              <div style={{fontSize:14,fontWeight:600,color:T.text}}>{user?.first_name} {user?.last_name}</div>
+              <div style={{fontSize:12,color:T.muted,marginTop:2}}>{user?.email}</div>
+              <div style={{fontSize:12,color:T.muted,marginTop:2}}>{user?.role} · {user?.location}</div>
             </div>
           </div>
         </div>
