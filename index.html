@@ -42,8 +42,10 @@ const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const SUPA_URL = "https://dmeigygmmxwmkyniizzj.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtZWlneWdtbXh3bWt5bmlpenpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NzU2NDEsImV4cCI6MjA4ODE1MTY0MX0.hTv4RICUBNWFNLsQEaZVqcbviqD0ZZSinwCzdSLRDJo";
 const sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
-const INV_URL = "https://hocrm-backend.onrender.com/inventory";
-const ALLOWED = ["houseofcarscalgary.com","houseofcars.com"];
+const BACKEND  = "https://hocrm-backend.onrender.com";
+const INV_URL  = BACKEND + "/inventory";
+const ALLOWED  = ["houseofcarscalgary.com","houseofcars.com"];
+const ROLES    = ["Sales","Manager","Site Admin","Admin"];
 const LOCS = ["52 Street","Airdrie","Barlow Trail","Chinook","Cochrane","Deerfoot Meadows","MacLeod Trail","McKnight Blvd","Olympic Park","Edmonton","Lethbridge","Medicine Hat"];
 
 const STATUSES = [
@@ -243,39 +245,86 @@ function App() {
   const nInfo = {...nBase,background:"rgba(10,132,255,.1)",borderColor:"rgba(10,132,255,.3)",color:"#4da3ff"};
   const nWarn = {...nBase,background:"rgba(255,149,0,.1)",borderColor:"rgba(255,149,0,.3)",color:"#FF9500"};
 
-  const isAdmin   = user?.role==="Admin";
-  const isManager = user?.role==="Manager";
+  const isAdmin     = user?.role==="Admin";
+  const isSiteAdmin = user?.role==="Site Admin";
+  const isManager   = user?.role==="Manager";
+  const canApproveSyncs = isAdmin || isSiteAdmin;
 
   function canSee(c) {
-    if (isAdmin) return true;
+    if (isAdmin || isSiteAdmin) return true;
     if (isManager) return c.assigned_location === user?.location;
     if (c.created_by === user?.id) return true;
     return leadAccess.some(a => a.client_id === c.id && a.user_id === user?.id);
   }
   function isOwnerOrSP2(c) {
-    if (isAdmin || isManager) return true;
+    if (isAdmin || isSiteAdmin || isManager) return true;
     if (c.created_by === user?.id) return true;
     return leadAccess.some(a => a.client_id === c.id && a.user_id === user?.id && a.can_edit);
   }
 
+  // ── Sync state ────────────────────────────────────────────────
+  const [syncStatus, setSyncStatus]       = useState(null); // from backend
+  const [syncRequesting, setSyncRequesting] = useState(false);
+  const [syncPollRef, setSyncPollRef]     = useState(null);
+
   // ── Data loaders ─────────────────────────────────────────────
-  const loadInv = async (force=false) => {
-    if(force){setSyncing(true);setSyncMsg({t:"",type:""});}
-    else{setInvLoad(true);setInvErr("");}
+  const loadInv = async () => {
+    setInvLoad(true); setInvErr("");
     try{
       const r=await fetch(INV_URL); if(!r.ok)throw new Error("API error "+r.status);
       const j=await r.json(); if(!j.success)throw new Error(j.error||"Backend error");
-      if(!j.vehicles?.length)throw new Error("No vehicles returned.");
-      setInv(j.vehicles.map(normalizeV));
+      if(j.vehicles?.length) setInv(j.vehicles.map(normalizeV));
+      if(j.syncStatus) setSyncStatus(j.syncStatus);
       setSynced(new Date().toLocaleTimeString("en-CA",{hour:"2-digit",minute:"2-digit"}));
-      if(force)setSyncMsg({t:"✅ "+j.vehicles.length+" vehicles synced.",type:"success"});
-    }catch(e){
-      if(force)setSyncMsg({t:"❌ "+e.message,type:"error"});
-      else setInvErr(e.message);
-    }finally{
-      setInvLoad(false);setSyncing(false);
-      if(force)setTimeout(()=>setSyncMsg({t:"",type:""}),5000);
-    }
+    }catch(e){ setInvErr(e.message); }
+    finally{ setInvLoad(false); }
+  };
+
+  const loadSyncStatus = async () => {
+    try{
+      const r = await fetch(BACKEND+"/inventory/sync-status");
+      const j = await r.json();
+      if(j.success) setSyncStatus(j);
+    }catch(e){ /* silent */ }
+  };
+
+  const requestSync = async () => {
+    setSyncRequesting(true); setSyncMsg({t:"",type:""});
+    try{
+      const r = await fetch(BACKEND+"/inventory/request-sync", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({userId:user.id, userName:user.first_name+" "+user.last_name})
+      });
+      const j = await r.json();
+      if(!j.success) throw new Error(j.error);
+      setSyncMsg({t:"✅ Sync request sent! An admin will approve it shortly.",type:"success"});
+      loadSyncStatus();
+    }catch(e){ setSyncMsg({t:"❌ "+e.message,type:"error"}); }
+    finally{ setSyncRequesting(false); setTimeout(()=>setSyncMsg({t:"",type:""}),6000); }
+  };
+
+  const approveSync = async (requestId) => {
+    setSyncMsg({t:"",type:""});
+    try{
+      const r = await fetch(BACKEND+"/inventory/approve-sync", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({requestId, approvedById:user.id, approvedByName:user.first_name+" "+user.last_name, userRole:user.role})
+      });
+      const j = await r.json();
+      if(!j.success) throw new Error(j.error);
+      setSyncMsg({t:"✅ Sync approved! Inventory will update in 10–20 minutes.",type:"success"});
+      loadSyncStatus(); loadNotifs();
+    }catch(e){ setSyncMsg({t:"❌ "+e.message,type:"error"}); }
+  };
+
+  const denySync = async (requestId) => {
+    try{
+      await fetch(BACKEND+"/inventory/deny-sync", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({requestId, deniedByName:user.first_name+" "+user.last_name, userRole:user.role})
+      });
+      setSyncMsg({t:"Request denied.",type:"success"}); loadSyncStatus();
+    }catch(e){ setSyncMsg({t:"❌ "+e.message,type:"error"}); }
   };
   const loadClients = async () => {
     setCLoad(true);
@@ -344,8 +393,8 @@ function App() {
 
   useEffect(()=>{
     if(screen==="app"){
-      loadInv();loadClients();loadPool();loadPosts();loadUsers();loadNotifs();loadChat();setupChatChannel();
-      const iv=setInterval(()=>{loadNotifs();loadPool();},30000);
+      loadInv();loadClients();loadPool();loadPosts();loadUsers();loadNotifs();loadChat();setupChatChannel();loadSyncStatus();
+      const iv=setInterval(()=>{loadNotifs();loadPool();loadSyncStatus();},30000);
       return()=>{clearInterval(iv);if(chatChannelRef.current)sb.removeChannel(chatChannelRef.current);};
     }
   },[screen]);
@@ -665,9 +714,9 @@ function App() {
               </select>
             </div>
             <div><div style={{fontSize:11,color:"#555",marginBottom:5}}>Role</div>
-              <div style={{display:"flex",gap:7}}>
-                {["Sales","Manager","Admin"].map(r=>(
-                  <button key={r} onClick={()=>setSf(p=>({...p,role:r}))} style={{flex:1,background:sf.role===r?"rgba(230,57,70,.18)":"rgba(255,255,255,.04)",color:sf.role===r?"#E63946":"#777",border:"1px solid",borderColor:sf.role===r?"rgba(230,57,70,.4)":"#252535",borderRadius:7,padding:"7px",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans'"}}>{r}</button>
+              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                {ROLES.map(r=>(
+                  <button key={r} onClick={()=>setSf(p=>({...p,role:r}))} style={{flex:1,background:sf.role===r?"rgba(230,57,70,.18)":"rgba(255,255,255,.04)",color:sf.role===r?"#E63946":"#777",border:"1px solid",borderColor:sf.role===r?"rgba(230,57,70,.4)":"#252535",borderRadius:7,padding:"7px",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans'",whiteSpace:"nowrap"}}>{r}</button>
                 ))}
               </div>
             </div>
@@ -702,7 +751,7 @@ function App() {
     {id:"pool",     label:"Lead Pool",icon:"🎯",badge:pool.length,bc:"#FF9500"},
     {id:"inventory",label:"Inventory",icon:"🚗",badge:inv.length,bc:"#0A84FF"},
     {id:"drafts",   label:"Ad Drafts",icon:"📝",badge:posts.filter(p=>p.status==="Draft").length,bc:"#FF9500"},
-    ...(isAdmin?[{id:"accounts",label:"Accounts",icon:"🔐"}]:[]),
+    ...(isAdmin||isSiteAdmin?[{id:"accounts",label:"Accounts",icon:"🔐"}]:[]),
   ];
 
   return(
@@ -1002,18 +1051,71 @@ function App() {
         )}
 
         {/* ═══ INVENTORY ═══ */}
-        {tab==="inventory"&&(
+        {tab==="inventory"&&(()=>{
+          const ss = syncStatus;
+          const isRunning  = ss?.status==="running";
+          const isPending  = ss?.status==="pending";
+          const isCooldown = ss?.cooldownLocked;
+          const hasPending = isPending && canApproveSyncs;
+          return(
           <div className="fu">
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12,flexWrap:"wrap",gap:8}}>
               <div>
                 <h2 style={{fontFamily:"'Bebas Neue'",fontSize:24,letterSpacing:2,color:T.text}}>LIVE INVENTORY</h2>
-                <p style={{fontSize:11,color:T.muted}}>{invLoad?"Fetching…":filtInv.length+" of "+inv.length+(synced?" · "+synced:"")}</p>
+                <p style={{fontSize:11,color:T.muted}}>
+                  {invLoad?"Fetching…":filtInv.length+" of "+inv.length+(synced?" · "+synced:"")}
+                  {ss?.completedAt&&!isRunning&&<span> · Last full sync {fmtDate(ss.completedAt)}{ss.vehiclesAdded>0?` · +${ss.vehiclesAdded} added`:""}{ss.vehiclesRemoved>0?` · ${ss.vehiclesRemoved} removed`:""}</span>}
+                </p>
               </div>
-              <button style={{...btnP,display:"flex",alignItems:"center",gap:6,padding:"8px 14px",fontSize:12}} onClick={()=>loadInv(true)} disabled={syncing||invLoad}>
-                {syncing?<><span className="spin"></span>Syncing…</>:"🔄 Sync"}
-              </button>
+              <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+                <button style={{...btnS,fontSize:11,display:"flex",alignItems:"center",gap:5}} onClick={loadInv} disabled={invLoad}>
+                  {invLoad?<><span className="spin"></span>Loading…</>:"↺ Refresh"}
+                </button>
+                {!isRunning&&!isPending&&!isCooldown&&(
+                  <button style={{...btnP,fontSize:12,display:"flex",alignItems:"center",gap:6,padding:"8px 14px"}} onClick={requestSync} disabled={syncRequesting}>
+                    {syncRequesting?<><span className="spin"></span>Requesting…</>:"🔄 Request Sync"}
+                  </button>
+                )}
+                {isCooldown&&!isRunning&&!isPending&&(
+                  <div style={{...nWarn,marginBottom:0,fontSize:11,padding:"6px 12px"}}>⏳ Next sync available {ss.nextAvailable} ({ss.hoursRemaining}h)</div>
+                )}
+                {isPending&&!canApproveSyncs&&(
+                  <div style={{...nInfo,marginBottom:0,fontSize:11,padding:"6px 12px"}}>🕐 Sync pending admin approval…</div>
+                )}
+                {isRunning&&(
+                  <div style={{...nWarn,marginBottom:0,fontSize:11,padding:"6px 12px",display:"flex",alignItems:"center",gap:6}}>
+                    <span className="spin" style={{width:11,height:11,borderTopColor:"#FF9500",borderColor:"rgba(255,149,0,.2)"}}></span>
+                    Sync running — inventory updating…
+                  </div>
+                )}
+              </div>
             </div>
             {syncMsg.t&&<div style={syncMsg.type==="success"?nOk:nErr} className="fu">{syncMsg.t}</div>}
+
+            {/* Admin approval banner */}
+            {hasPending&&(
+              <div style={{...nWarn,display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,marginBottom:14}}>
+                <span style={{fontSize:13}}>🔔 <strong>{ss.requestedBy}</strong> has requested an inventory sync. Approve to start the scraper?</span>
+                <div style={{display:"flex",gap:8,flexShrink:0}}>
+                  <button style={{background:"#34C759",color:"#fff",border:"none",borderRadius:7,padding:"7px 14px",fontFamily:"'DM Sans'",fontSize:12,fontWeight:700,cursor:"pointer"}} onClick={()=>approveSync(ss.requestId)}>✅ Approve</button>
+                  <button style={{background:"#E63946",color:"#fff",border:"none",borderRadius:7,padding:"7px 12px",fontFamily:"'DM Sans'",fontSize:12,fontWeight:700,cursor:"pointer"}} onClick={()=>denySync(ss.requestId)}>✗ Deny</button>
+                </div>
+              </div>
+            )}
+
+            {/* Sync-in-progress overlay message */}
+            {isRunning&&(
+              <div style={{...card,textAlign:"center",padding:48,marginBottom:16,border:`2px solid ${T.accent}44`}}>
+                <div style={{fontSize:40,marginBottom:12}}>🔄</div>
+                <div style={{fontSize:17,fontWeight:700,color:T.text,marginBottom:8}}>Inventory Sync In Progress</div>
+                <p style={{fontSize:13,color:T.muted,marginBottom:6}}>The scraper is pulling fresh data from houseofcars.com. This usually takes 10–20 minutes.</p>
+                <p style={{fontSize:12,color:T.muted}}>The list below shows the last known inventory. Check back shortly for the updated list.</p>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginTop:14,color:"#FF9500",fontSize:13}}>
+                  <span className="spin" style={{width:14,height:14,borderTopColor:"#FF9500",borderColor:"rgba(255,149,0,.2)"}}></span>
+                  Scraper running…
+                </div>
+              </div>
+            )}
             <div style={{display:"flex",gap:7,marginBottom:10,flexWrap:"wrap",alignItems:"center"}}>
               <span style={{fontSize:10,color:T.muted,fontWeight:700}}>SORT:</span>
               {[["price","💰"],["year","📅"],["mileage","🔢"],["make","🔤"]].map(([col,icon])=>(
@@ -1067,7 +1169,8 @@ function App() {
             )}
             {invLoad&&<div style={{color:T.muted,padding:20,textAlign:"center"}}>Loading inventory…</div>}
           </div>
-        )}
+          );
+        })()}
 
         {/* ═══ AD DRAFTS ═══ */}
         {tab==="drafts"&&(
@@ -1111,10 +1214,10 @@ function App() {
         )}
 
         {/* ═══ ACCOUNTS ═══ */}
-        {tab==="accounts"&&isAdmin&&(
+        {tab==="accounts"&&(isAdmin||isSiteAdmin)&&(
           <div className="fu">
             <h2 style={{fontFamily:"'Bebas Neue'",fontSize:24,letterSpacing:2,color:T.text,marginBottom:4}}>ACCOUNTS</h2>
-            <p style={{fontSize:11,color:T.muted,marginBottom:16}}>{users.length} users · Admin only</p>
+            <p style={{fontSize:11,color:T.muted,marginBottom:16}}>{users.length} users · {user?.role} access</p>
             <div className="two-col" style={{display:"grid",gridTemplateColumns:"1fr 360px",gap:14,alignItems:"start"}}>
               <div style={{...card,padding:0,overflow:"hidden"}}>
                 <div style={{overflowX:"auto"}}>
@@ -1129,7 +1232,7 @@ function App() {
                           <td style={{fontWeight:600,borderBottomColor:T.border,color:T.text,padding:"9px 12px",fontSize:12}}>{u.first_name} {u.last_name}{u.id===user?.id&&<span style={{fontSize:9,color:T.accent,background:T.accent+"22",padding:"1px 5px",borderRadius:4,marginLeft:4}}>You</span>}</td>
                           <td style={{fontSize:11,color:T.muted,fontFamily:"monospace",borderBottomColor:T.border,padding:"9px 12px"}}>{u.email}</td>
                           <td style={{borderBottomColor:T.border,padding:"9px 12px"}}><span style={{fontSize:10,background:T.bg,border:`1px solid ${T.border}`,borderRadius:4,padding:"2px 6px",color:T.text}}>📍 {u.location}</span></td>
-                          <td style={{borderBottomColor:T.border,padding:"9px 12px"}}><span style={{fontSize:10,fontWeight:700,color:u.role==="Admin"?"#E63946":u.role==="Manager"?"#FF9500":"#0A84FF"}}>{u.role}</span></td>
+                          <td style={{borderBottomColor:T.border,padding:"9px 12px"}}><span style={{fontSize:10,fontWeight:700,color:u.role==="Admin"?"#E63946":u.role==="Site Admin"?"#BF5AF2":u.role==="Manager"?"#FF9500":"#0A84FF"}}>{u.role}</span></td>
                           <td style={{borderBottomColor:T.border,padding:"9px 12px"}}><span style={{fontSize:11,fontWeight:700,color:u.status==="active"?"#34C759":"#E63946"}}>{u.status==="active"?"●":"●"}</span></td>
                           <td style={{borderBottomColor:T.border,padding:"9px 12px"}}>
                             {u.id!==user?.id&&<div style={{display:"flex",gap:5}}>
@@ -1155,7 +1258,7 @@ function App() {
                   <div><div style={{fontSize:10,color:T.muted,marginBottom:3}}>Email</div><input style={inp} placeholder="name@houseofcars.com" value={rf.email} onChange={e=>{setRf(p=>({...p,email:e.target.value}));setRErr("");setROk(false);}}/></div>
                   <div><div style={{fontSize:10,color:T.muted,marginBottom:3}}>Location</div><select style={inp} value={rf.location} onChange={e=>setRf(p=>({...p,location:e.target.value}))}><option value="">Select…</option>{LOCS.map(l=><option key={l}>{l}</option>)}</select></div>
                   <div><div style={{fontSize:10,color:T.muted,marginBottom:4}}>Role</div>
-                    <div style={{display:"flex",gap:6}}>{["Sales","Manager","Admin"].map(r=><button key={r} onClick={()=>setRf(p=>({...p,role:r}))} style={{flex:1,background:rf.role===r?T.accent+"22":"rgba(128,128,128,.08)",color:rf.role===r?T.accent:T.muted,border:"1px solid",borderColor:rf.role===r?T.accent+"44":T.border,borderRadius:7,padding:"5px",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans'"}}>{r}</button>)}</div>
+                    <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{ROLES.map(r=><button key={r} onClick={()=>setRf(p=>({...p,role:r}))} style={{flex:1,background:rf.role===r?T.accent+"22":"rgba(128,128,128,.08)",color:rf.role===r?T.accent:T.muted,border:"1px solid",borderColor:rf.role===r?T.accent+"44":T.border,borderRadius:7,padding:"5px 3px",fontSize:10,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans'",whiteSpace:"nowrap"}}>{r}</button>)}</div>
                   </div>
                   <div><div style={{fontSize:10,color:T.muted,marginBottom:3}}>Password</div><input style={inp} type="password" placeholder="Min. 8 chars" value={rf.password} onChange={e=>setRf(p=>({...p,password:e.target.value}))}/></div>
                   <div><div style={{fontSize:10,color:T.muted,marginBottom:3}}>Confirm</div><input style={inp} type="password" value={rf.confirm} onChange={e=>setRf(p=>({...p,confirm:e.target.value}))}/></div>
