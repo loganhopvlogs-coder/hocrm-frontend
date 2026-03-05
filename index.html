@@ -44,7 +44,6 @@ const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 const BACKEND  = "https://hocrm-backend.onrender.com";
 const INV_URL  = BACKEND + "/inventory";
-const LAST_DATASET_ID = "rcEKHccRtnYL70XU9"; // fallback dataset for manual pull
 const ALLOWED  = ["houseofcarscalgary.com","houseofcars.com"];
 const ROLES    = ["Sales","Manager","Site Admin","Admin"];
 const LOCS = ["52 Street","Airdrie","Barlow Trail","Chinook","Cochrane","Deerfoot Meadows","MacLeod Trail","McKnight Blvd","Olympic Park","Edmonton","Lethbridge","Medicine Hat"];
@@ -383,22 +382,6 @@ function App() {
       setSyncMsg({t:"✅ Sync approved! Now run RUN-SCRAPER.bat on your computer to start the sync.",type:"success"});
       loadSyncStatus(); loadNotifs();
     }catch(e){ setSyncMsg({t:"❌ "+e.message,type:"error"}); }
-  };
-
-  const pullDataset = async () => {
-    if(!window.confirm("Manually pull inventory from the last completed scrape into Supabase?\n\nOnly use this if the scraper already finished but inventory did not update."))return;
-    setSyncRequesting(true); setSyncMsg({t:"",type:""});
-    try{
-      const r = await fetch(BACKEND+"/inventory/pull-dataset", {
-        method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({userId:user.id, userName:user.first_name+" "+user.last_name, userRole:user.role, datasetId:LAST_DATASET_ID})
-      });
-      const j = await r.json();
-      if(!j.success) throw new Error(j.error);
-      setSyncMsg({t:"📥 "+j.message,type:"success"});
-      setTimeout(()=>loadInv(),3000);
-    }catch(e){ setSyncMsg({t:"❌ "+e.message,type:"error"}); }
-    finally{ setSyncRequesting(false); setTimeout(()=>setSyncMsg({t:"",type:""}),8000); }
   };
 
   const denySync = async (requestId) => {
@@ -1163,11 +1146,7 @@ function App() {
                 {isCooldown&&!isRunning&&!isPending&&(
                   <div style={{...nWarn,marginBottom:0,fontSize:11,padding:"6px 12px"}}>⏳ Next sync available {ss.nextAvailable} ({ss.hoursRemaining}h)</div>
                 )}
-                {canApproveSyncs&&!isRunning&&(
-                  <button style={{...btnS,fontSize:11,display:"flex",alignItems:"center",gap:5,color:"#BF5AF2",borderColor:"rgba(191,90,242,.4)"}} onClick={pullDataset} disabled={syncRequesting}>
-                    {syncRequesting?<><span className="spin"></span>Pulling…</>:"📥 Pull Last Scrape"}
-                  </button>
-                )}
+
                 {isPending&&!canApproveSyncs&&(
                   <div style={{...nInfo,marginBottom:0,fontSize:11,padding:"6px 12px"}}>🕐 Sync pending admin approval…</div>
                 )}
