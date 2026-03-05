@@ -645,6 +645,27 @@ function App() {
     e.target.value="";
   };
 
+  // ── Delete a vehicle photo ───────────────────────────────────
+  const deletePhoto = async (photoId, stock) => {
+    if(!window.confirm("Remove this photo?")) return;
+    try {
+      await sb.from("vehicle_photos").delete().eq("id", photoId);
+      setVPhotos(prev => ({...prev, [stock]: (prev[stock]||[]).filter(p => p.id !== photoId)}));
+    } catch(err) { console.error(err); }
+  };
+
+  // ── Save mileage to Supabase so everyone sees it ──────────────
+  const saveMileage = async (stock, mileage) => {
+    try {
+      await sb.from("inventory").update({ mileage }).eq("stock", stock);
+      // Update local inv state so it reflects immediately
+      setInv(prev => prev.map(v => v.stock === stock ? {...v, mileage} : v));
+      // Update agentVehicle if open
+      if (agentVehicle?.stock === stock) setAgentVehicle(prev => ({...prev, mileage}));
+      if (selVehicle?.stock === stock) setSelVehicle(prev => ({...prev, mileage}));
+    } catch(err) { console.error("saveMileage:", err); }
+  };
+
   // ── User management ───────────────────────────────────────────
   const doRegister = async () => {
     setRErr("");setROk(false);
@@ -1507,7 +1528,10 @@ function App() {
               <div style={{fontSize:11,color:T.muted,marginBottom:5,fontWeight:600}}>PHOTOS <span style={{fontWeight:400,color:"#E63946"}}>* required</span></div>
               <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:8}}>
                 {(vPhotos[agentVehicle?.stock]||[]).map((p,i)=>(
-                  <img key={i} src={p.url||p.data_url} alt="" style={{width:72,height:52,objectFit:"cover",borderRadius:6,border:`1px solid ${T.border}`}} onError={e=>e.target.style.display="none"}/>
+                  <div key={i} style={{position:"relative"}}>
+                    <img src={p.url||p.data_url} alt="" style={{width:72,height:52,objectFit:"cover",borderRadius:6,border:`1px solid ${T.border}`,display:"block"}} onError={e=>e.target.style.display="none"}/>
+                    <button onClick={()=>deletePhoto(p.id,agentVehicle.stock)} style={{position:"absolute",top:2,right:2,background:"rgba(230,57,70,.9)",border:"none",borderRadius:"50%",width:18,height:18,cursor:"pointer",color:"#fff",fontSize:10,lineHeight:"18px",textAlign:"center",padding:0}}>×</button>
+                  </div>
                 ))}
                 {(vPhotos[agentVehicle?.stock]||[]).length===0&&(
                   <div style={{fontSize:11,color:T.muted,padding:"8px 0"}}>No photos yet — upload below</div>
@@ -1590,12 +1614,23 @@ function App() {
               <button style={{background:"none",border:"none",color:T.muted,cursor:"pointer",fontSize:22}} onClick={()=>setSelVehicle(null)}>×</button>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14,fontSize:13}}>
-              {[["Stock #",selVehicle.stock],["Price",fmtCur(selVehicle.price)+" + GST"],["Year",selVehicle.year],["Make",selVehicle.make],["Model",selVehicle.model],["KM",selVehicle.mileage],["Colour",selVehicle.color||"—"],["Location","📍 "+selVehicle.location],["Type",selVehicle.type||"—"],["Condition",selVehicle.condition]].map(([k,v])=>(
+              {[["Stock #",selVehicle.stock],["Price",fmtCur(selVehicle.price)+" + GST"],["Year",selVehicle.year],["Make",selVehicle.make],["Model",selVehicle.model],["Colour",selVehicle.color||"—"],["Location","📍 "+selVehicle.location],["Type",selVehicle.type||"—"],["Condition",selVehicle.condition]].map(([k,v])=>(
                 <div key={k} style={{background:T.bg,borderRadius:7,padding:"7px 10px"}}>
                   <div style={{fontSize:10,color:T.muted,marginBottom:2}}>{k}</div>
                   <div style={{fontSize:13,fontWeight:600,color:T.text}}>{v}</div>
                 </div>
               ))}
+            </div>
+
+            {/* Editable mileage */}
+            <div style={{marginBottom:12,display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:12,color:T.muted,minWidth:30}}>KM</span>
+              <input style={{...inp,flex:1,fontSize:12,padding:"6px 10px"}}
+                defaultValue={selVehicle.mileage||""}
+                placeholder="e.g. 85,432 km"
+                onBlur={e=>{const val=e.target.value.trim();if(val!==selVehicle.mileage)saveMileage(selVehicle.stock,val);}}
+              />
+              <span style={{fontSize:10,color:"#34C759"}}>✓ saves for everyone</span>
             </div>
 
             {/* Photos */}
@@ -1604,7 +1639,10 @@ function App() {
               <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}>
                 {selVehicle.image&&<img src={selVehicle.image} alt="" style={{width:120,height:80,objectFit:"cover",borderRadius:7}} onError={e=>e.target.style.display="none"}/>}
                 {(vPhotos[selVehicle.stock]||[]).map((p,i)=>(
-                  <img key={i} src={p.url} alt="" style={{width:120,height:80,objectFit:"cover",borderRadius:7}} onError={e=>e.target.style.display="none"}/>
+                  <div key={i} style={{position:"relative"}}>
+                    <img src={p.url} alt="" style={{width:120,height:80,objectFit:"cover",borderRadius:7,display:"block"}} onError={e=>e.target.style.display="none"}/>
+                    <button onClick={()=>deletePhoto(p.id,selVehicle.stock)} style={{position:"absolute",top:3,right:3,background:"rgba(230,57,70,.9)",border:"none",borderRadius:"50%",width:20,height:20,cursor:"pointer",color:"#fff",fontSize:11,lineHeight:"20px",textAlign:"center",padding:0}}>×</button>
+                  </div>
                 ))}
               </div>
               <label style={{...btnS,display:"inline-flex",alignItems:"center",gap:6,cursor:"pointer",fontSize:12}}>
@@ -1664,6 +1702,25 @@ function App() {
                   <span style={{fontSize:10,color:T.muted}}>{draftText.length} chars</span>
                 </div>
                 <textarea style={{...inp,flex:1,minHeight:420,fontSize:12,lineHeight:1.75,resize:"none"}} value={draftText} onChange={e=>setDraftText(e.target.value)} placeholder="Select a vehicle to generate the HOC template."/>
+                {/* Photo upload in draft tab */}
+                {draftV&&(
+                  <div style={{marginTop:10}}>
+                    <div style={{fontSize:11,color:T.muted,fontWeight:600,marginBottom:6}}>VEHICLE PHOTOS</div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:8}}>
+                      {(vPhotos[draftV.stock]||[]).map((p,i)=>(
+                        <div key={i} style={{position:"relative"}}>
+                          <img src={p.url||p.data_url} alt="" style={{width:64,height:46,objectFit:"cover",borderRadius:5,display:"block",border:`1px solid ${T.border}`}} onError={e=>e.target.style.display="none"}/>
+                          <button onClick={()=>deletePhoto(p.id,draftV.stock)} style={{position:"absolute",top:2,right:2,background:"rgba(230,57,70,.9)",border:"none",borderRadius:"50%",width:16,height:16,cursor:"pointer",color:"#fff",fontSize:9,lineHeight:"16px",textAlign:"center",padding:0}}>×</button>
+                        </div>
+                      ))}
+                      {(vPhotos[draftV.stock]||[]).length===0&&<div style={{fontSize:11,color:T.muted}}>No photos yet</div>}
+                    </div>
+                    <label style={{...btnS,display:"inline-flex",alignItems:"center",gap:5,cursor:"pointer",fontSize:11}}>
+                      {photoUploading?<><span className="spin"></span>Uploading…</>:"📷 Add Photos"}
+                      <input type="file" accept="image/*" multiple style={{display:"none"}} onChange={e=>handlePhotoUpload(e,draftV.stock)} disabled={photoUploading}/>
+                    </label>
+                  </div>
+                )}
               </div>
             </div>
             <div style={{...nInfo,marginTop:12,fontSize:12}}>📋 "Copy & Open Marketplace" copies your ad and opens Facebook Marketplace. Paste and fill in vehicle details.</div>
