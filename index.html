@@ -44,6 +44,7 @@ const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 const BACKEND  = "https://hocrm-backend.onrender.com";
 const INV_URL  = BACKEND + "/inventory";
+const LAST_DATASET_ID = "rcEKHccRtnYL70XU9"; // fallback dataset for manual pull
 const ALLOWED  = ["houseofcarscalgary.com","houseofcars.com"];
 const ROLES    = ["Sales","Manager","Site Admin","Admin"];
 const LOCS = ["52 Street","Airdrie","Barlow Trail","Chinook","Cochrane","Deerfoot Meadows","MacLeod Trail","McKnight Blvd","Olympic Park","Edmonton","Lethbridge","Medicine Hat"];
@@ -297,7 +298,7 @@ function App() {
       });
       const j = await r.json();
       if(!j.success) throw new Error(j.error);
-      setSyncMsg({t:"✅ Sync request sent! An admin will approve it shortly.",type:"success"});
+      setSyncMsg({t:"✅ Sync request sent! An admin will approve it, then run RUN-SCRAPER.bat to sync.",type:"success"});
       loadSyncStatus();
     }catch(e){ setSyncMsg({t:"❌ "+e.message,type:"error"}); }
     finally{ setSyncRequesting(false); setTimeout(()=>setSyncMsg({t:"",type:""}),6000); }
@@ -312,18 +313,18 @@ function App() {
       });
       const j = await r.json();
       if(!j.success) throw new Error(j.error);
-      setSyncMsg({t:"✅ Sync approved! Inventory will update in 10–20 minutes.",type:"success"});
+      setSyncMsg({t:"✅ Sync approved! Now run RUN-SCRAPER.bat on your computer to start the sync.",type:"success"});
       loadSyncStatus(); loadNotifs();
     }catch(e){ setSyncMsg({t:"❌ "+e.message,type:"error"}); }
   };
 
   const pullDataset = async () => {
-    if(!window.confirm("Pull the latest completed Apify dataset into Supabase?\n\nOnly use this if a sync was approved but the server timed out before it could finish writing."))return;
+    if(!window.confirm("Manually pull inventory from the last completed scrape into Supabase?\n\nOnly use this if the scraper already finished but inventory did not update."))return;
     setSyncRequesting(true); setSyncMsg({t:"",type:""});
     try{
       const r = await fetch(BACKEND+"/inventory/pull-dataset", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({userId:user.id, userName:user.first_name+" "+user.last_name, userRole:user.role, datasetId:APIFY_DATASET_ID})
+        body: JSON.stringify({userId:user.id, userName:user.first_name+" "+user.last_name, userRole:user.role, datasetId:LAST_DATASET_ID})
       });
       const j = await r.json();
       if(!j.success) throw new Error(j.error);
@@ -1097,7 +1098,7 @@ function App() {
                 )}
                 {canApproveSyncs&&!isRunning&&(
                   <button style={{...btnS,fontSize:11,display:"flex",alignItems:"center",gap:5,color:"#BF5AF2",borderColor:"rgba(191,90,242,.4)"}} onClick={pullDataset} disabled={syncRequesting}>
-                    {syncRequesting?<><span className="spin"></span>Pulling…</>:"📥 Pull Apify Dataset"}
+                    {syncRequesting?<><span className="spin"></span>Pulling…</>:"📥 Pull Last Scrape"}
                   </button>
                 )}
                 {isPending&&!canApproveSyncs&&(
@@ -1116,7 +1117,7 @@ function App() {
             {/* Admin approval banner */}
             {hasPending&&(
               <div style={{...nWarn,display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,marginBottom:14}}>
-                <span style={{fontSize:13}}>🔔 <strong>{ss.requestedBy}</strong> has requested an inventory sync. Approve to start the scraper?</span>
+                <span style={{fontSize:13}}>🔔 <strong>{ss.requestedBy}</strong> has requested an inventory sync. Approve, then run <strong>RUN-SCRAPER.bat</strong> on your computer.</span>
                 <div style={{display:"flex",gap:8,flexShrink:0}}>
                   <button style={{background:"#34C759",color:"#fff",border:"none",borderRadius:7,padding:"7px 14px",fontFamily:"'DM Sans'",fontSize:12,fontWeight:700,cursor:"pointer"}} onClick={()=>approveSync(ss.requestId)}>✅ Approve</button>
                   <button style={{background:"#E63946",color:"#fff",border:"none",borderRadius:7,padding:"7px 12px",fontFamily:"'DM Sans'",fontSize:12,fontWeight:700,cursor:"pointer"}} onClick={()=>denySync(ss.requestId)}>✗ Deny</button>
@@ -1129,7 +1130,7 @@ function App() {
               <div style={{...card,textAlign:"center",padding:48,marginBottom:16,border:`2px solid ${T.accent}44`}}>
                 <div style={{fontSize:40,marginBottom:12}}>🔄</div>
                 <div style={{fontSize:17,fontWeight:700,color:T.text,marginBottom:8}}>Inventory Sync In Progress</div>
-                <p style={{fontSize:13,color:T.muted,marginBottom:6}}>The scraper is pulling fresh data from houseofcars.com. This usually takes 10–20 minutes.</p>
+                <p style={{fontSize:13,color:T.muted,marginBottom:6}}>The local scraper is running on someone's computer and pushing fresh data from houseofcars.com. This usually takes 5–15 minutes.</p>
                 <p style={{fontSize:12,color:T.muted}}>The list below shows the last known inventory. Check back shortly for the updated list.</p>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginTop:14,color:"#FF9500",fontSize:13}}>
                   <span className="spin" style={{width:14,height:14,borderTopColor:"#FF9500",borderColor:"rgba(255,149,0,.2)"}}></span>
