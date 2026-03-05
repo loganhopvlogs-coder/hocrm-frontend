@@ -263,10 +263,77 @@ function App() {
     return leadAccess.some(a => a.client_id === c.id && a.user_id === user?.id && a.can_edit);
   }
 
+  // ── Agent functions ──────────────────────────────────────────
+  const checkAgent = async () => {
+    try{
+      const r = await fetch(AGENT_URL+"/status",{signal:AbortSignal.timeout(2000)});
+      const j = await r.json();
+      setAgentRunning(true);
+      setAgentStatusUI(j);
+      return true;
+    }catch(e){ setAgentRunning(false); setAgentStatusUI(null); return false; }
+  };
+
+  const openAgentPanel = async (vehicle) => {
+    setAgentVehicle(vehicle);
+    setAgentFeatures("");
+    setAgentNote("");
+    setAgentMsg({t:"",type:""});
+    setShowAgent(true);
+    await checkAgent();
+  };
+
+  const startAgentJob = async () => {
+    if(!agentVehicle) return;
+    setAgentMsg({t:"",type:""});
+    const alive = await checkAgent();
+    if(!alive){
+      setAgentMsg({t:"❌ Agent not running. Open START-AGENT.bat on your computer first.",type:"error"});
+      return;
+    }
+    try{
+      const jobId = "job_"+Date.now();
+      const photos = (vPhotos[agentVehicle.stock]||[]).map(p=>p.url||p.data_url).filter(Boolean);
+      const r = await fetch(AGENT_URL+"/post",{
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({vehicle:agentVehicle, features:agentFeatures, customNote:agentNote, photos, jobId})
+      });
+      const j = await r.json();
+      if(!j.success) throw new Error(j.error);
+      setAgentMsg({t:"🚀 Agent started! Watch the browser window that opens on your computer.",type:"success"});
+      // Start polling status
+      const iv = setInterval(async()=>{
+        const alive2 = await checkAgent();
+        if(!alive2){ clearInterval(iv); setAgentPollIv(null); }
+      }, 3000);
+      setAgentPollIv(iv);
+    }catch(e){ setAgentMsg({t:"❌ "+e.message,type:"error"}); }
+  };
+
+  const stopAgent = async () => {
+    try{
+      await fetch(AGENT_URL+"/stop",{method:"POST"});
+      setAgentMsg({t:"⏹ Agent stopped.",type:"success"});
+      if(agentPollIv){ clearInterval(agentPollIv); setAgentPollIv(null); }
+      await checkAgent();
+    }catch(e){ setAgentMsg({t:"❌ Could not reach agent.",type:"error"}); }
+  };
+
   // ── Sync state ────────────────────────────────────────────────
   const [syncStatus, setSyncStatus]       = useState(null); // from backend
   const [syncRequesting, setSyncRequesting] = useState(false);
   const [syncPollRef, setSyncPollRef]     = useState(null);
+
+  // ── Agent state ──────────────────────────────────────────────
+  const AGENT_URL = "http://localhost:7823";
+  const [agentRunning, setAgentRunning]   = useState(false);
+  const [agentStatus,  setAgentStatusUI]  = useState(null);
+  const [showAgent,    setShowAgent]      = useState(false);
+  const [agentVehicle, setAgentVehicle]   = useState(null);
+  const [agentFeatures,setAgentFeatures]  = useState("");
+  const [agentNote,    setAgentNote]      = useState("");
+  const [agentMsg,     setAgentMsg]       = useState({t:"",type:""});
+  const [agentPollIv,  setAgentPollIv]    = useState(null);
 
   // ── Data loaders ─────────────────────────────────────────────
   const loadInv = async () => {
@@ -1179,6 +1246,7 @@ function App() {
                           <td style={{borderBottomColor:T.border,padding:"9px 12px"}} onClick={e=>e.stopPropagation()}>
                             <div style={{display:"flex",gap:5}}>
                               <button style={{...btnS,fontSize:11,padding:"3px 8px"}} onClick={()=>openDraft(v)}>📝</button>
+                              <button style={{...btnS,fontSize:11,padding:"3px 8px",background:"rgba(0,122,255,.12)",color:"#0A84FF",borderColor:"rgba(0,122,255,.3)"}} onClick={e=>{e.stopPropagation();openAgentPanel(v);}}>🤖</button>
                               {v.listingUrl&&<a href={v.listingUrl} target="_blank" rel="noopener noreferrer" style={{...btnS,fontSize:11,padding:"3px 8px",textDecoration:"none"}}>↗</a>}
                             </div>
                           </td>
@@ -1413,6 +1481,72 @@ function App() {
       )}
 
       {/* Vehicle Profile / Photo Upload */}
+      {/* ═══ AGENT PANEL ═══ */}
+      {showAgent&&agentVehicle&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setShowAgent(false)}>
+          <div style={{...card,width:"100%",maxWidth:520,maxHeight:"90vh",overflowY:"auto",position:"relative"}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:20,letterSpacing:2,color:T.text}}>🤖 POST WITH AGENT</h3>
+              <button style={{background:"none",border:"none",color:T.muted,cursor:"pointer",fontSize:22}} onClick={()=>setShowAgent(false)}>×</button>
+            </div>
+            <div style={{...card,background:agentRunning?"rgba(52,199,89,.08)":"rgba(230,57,70,.08)",border:`1px solid ${agentRunning?"rgba(52,199,89,.3)":"rgba(230,57,70,.3)"}`,marginBottom:16,padding:"10px 14px",display:"flex",alignItems:"center",gap:10}}>
+              <div style={{width:8,height:8,borderRadius:"50%",background:agentRunning?"#34C759":"#E63946",flexShrink:0}}></div>
+              <div>
+                <div style={{fontSize:12,fontWeight:700,color:agentRunning?"#34C759":"#E63946"}}>{agentRunning?"Agent Running":"Agent Offline"}</div>
+                <div style={{fontSize:11,color:T.muted}}>{agentRunning?(agentStatus?.message||"Ready"):"Open START-AGENT.bat on your computer first"}</div>
+              </div>
+              <button style={{...btnS,fontSize:10,marginLeft:"auto"}} onClick={checkAgent}>↺ Check</button>
+            </div>
+            {!agentRunning&&(
+              <div style={{...nInfo,marginBottom:16,fontSize:12}}>
+                <div style={{fontWeight:700,marginBottom:8}}>📋 First time setup:</div>
+                <div style={{lineHeight:1.8}}>
+                  1. Open your <strong>HOC-AGENT</strong> folder on your computer<br/>
+                  2. Double-click <strong>INSTALL-AGENT.bat</strong> (one time only)<br/>
+                  3. Double-click <strong>START-AGENT.bat</strong><br/>
+                  4. Keep that window open and come back here<br/>
+                  5. Click <strong>↺ Check</strong> above — dot turns green when ready
+                </div>
+              </div>
+            )}
+            <div style={{...card,background:T.bg,marginBottom:14,padding:"10px 14px"}}>
+              <div style={{fontSize:11,color:T.muted,marginBottom:4}}>POSTING TO MARKETPLACE</div>
+              <div style={{fontSize:15,fontWeight:700,color:T.text}}>{agentVehicle.year} {agentVehicle.make} {agentVehicle.model}</div>
+              <div style={{fontSize:12,color:T.muted}}>Stock #{agentVehicle.stock} · {agentVehicle.mileage} · ${Number(agentVehicle.price||0).toLocaleString()} + GST · 📍 {agentVehicle.location}</div>
+            </div>
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:11,color:T.muted,marginBottom:5,fontWeight:600}}>FEATURES <span style={{fontWeight:400}}>(one per line)</span></div>
+              <textarea style={{...inp,width:"100%",minHeight:100,fontSize:12,lineHeight:1.6,resize:"vertical"}} placeholder={"Heated seats\nBackup camera\nApple CarPlay\nBlind spot monitoring"} value={agentFeatures} onChange={e=>setAgentFeatures(e.target.value)}/>
+            </div>
+            <div style={{marginBottom:16}}>
+              <div style={{fontSize:11,color:T.muted,marginBottom:5,fontWeight:600}}>CUSTOM NOTE <span style={{fontWeight:400}}>(optional)</span></div>
+              <textarea style={{...inp,width:"100%",minHeight:60,fontSize:12,resize:"vertical"}} placeholder="e.g. Clean title, no accidents, one owner..." value={agentNote} onChange={e=>setAgentNote(e.target.value)}/>
+            </div>
+            {agentStatus?.state&&!["idle","complete","error"].includes(agentStatus.state)&&(
+              <div style={{marginBottom:14}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                  <span style={{fontSize:11,color:T.muted}}>{agentStatus.message}</span>
+                  <span style={{fontSize:11,color:T.accent}}>{agentStatus.progress}%</span>
+                </div>
+                <div style={{height:4,background:T.border,borderRadius:2,overflow:"hidden"}}>
+                  <div style={{height:"100%",width:(agentStatus.progress||0)+"%",background:T.accent,borderRadius:2,transition:"width .5s ease"}}></div>
+                </div>
+              </div>
+            )}
+            {agentMsg.t&&<div style={{...(agentMsg.type==="success"?nOk:nErr),marginBottom:14}}>{agentMsg.t}</div>}
+            {agentStatus?.state==="complete"&&<div style={{...nOk,marginBottom:14,fontSize:13}}>{agentStatus.message}</div>}
+            <div style={{display:"flex",gap:8}}>
+              {agentStatus?.state&&!["idle","complete","error"].includes(agentStatus.state)?(
+                <button style={{...btnP,background:"#E63946",flex:1}} onClick={stopAgent}>⏹ Stop Agent</button>
+              ):(
+                <button style={{...btnP,flex:1,opacity:agentRunning?1:.5}} onClick={startAgentJob} disabled={!agentRunning}>🤖 Post to Facebook Marketplace</button>
+              )}
+              <button style={{...btnS}} onClick={()=>setShowAgent(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {selVehicle&&(
         <div className="overlay-mobile" style={{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setSelVehicle(null)}>
           <div className="modal-inner" style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:18,padding:24,width:620,maxWidth:"100%",maxHeight:"92vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
@@ -1447,6 +1581,7 @@ function App() {
 
             <div style={{display:"flex",gap:8}}>
               <button style={btnP} onClick={()=>{setSelVehicle(null);openDraft(selVehicle);}}>📝 Draft Ad</button>
+              <button style={{...btnP,background:"#0A84FF",marginLeft:8}} onClick={()=>{setSelVehicle(null);openAgentPanel(selVehicle);}}>🤖 Post with Agent</button>
               {selVehicle.listingUrl&&<a href={selVehicle.listingUrl} target="_blank" rel="noopener noreferrer" style={{...btnS,textDecoration:"none",display:"inline-flex",alignItems:"center",gap:4}}>↗ View Listing</a>}
             </div>
           </div>
