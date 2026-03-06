@@ -368,7 +368,7 @@ function App() {
   const [syncPollRef, setSyncPollRef]     = useState(null);
 
   // ── Agent state ──────────────────────────────────────────────
-  const AGENT_URL = "http://localhost:7823";
+  // AGENT_URL removed — Revora EXE communicates via Supabase jobs table
   const [agentRunning, setAgentRunning]   = useState(false);
   const [agentStatus,  setAgentStatusUI]  = useState(null);
   const [showAgent,    setShowAgent]      = useState(false);
@@ -384,10 +384,16 @@ function App() {
     try{
       const r=await fetch(INV_URL); if(!r.ok)throw new Error("API error "+r.status);
       const j=await r.json(); if(!j.success)throw new Error(j.error||"Backend error");
-      if(j.vehicles?.length) setInv(j.vehicles.map(normalizeV));
+      if(j.vehicles?.length) {
+        setInv(j.vehicles.map(normalizeV));
+        setSynced(new Date().toLocaleTimeString("en-CA",{hour:"2-digit",minute:"2-digit"}));
+      }
       if(j.syncStatus) setSyncStatus(j.syncStatus);
-      setSynced(new Date().toLocaleTimeString("en-CA",{hour:"2-digit",minute:"2-digit"}));
-    }catch(e){ setInvErr(e.message); }
+    }catch(e){
+      setInvErr(e.message);
+      // DO NOT wipe existing inv on error — keep showing what we have
+      console.warn("loadInv failed, preserving existing inventory:", e.message);
+    }
     finally{ setInvLoad(false); }
   };
 
@@ -1537,7 +1543,7 @@ function App() {
               <div style={{width:8,height:8,borderRadius:"50%",background:agentRunning?"#34C759":"#E63946",flexShrink:0}}></div>
               <div>
                 <div style={{fontSize:12,fontWeight:700,color:agentRunning?"#34C759":"#E63946"}}>{agentRunning?"Agent Running":"Agent Offline"}</div>
-                <div style={{fontSize:11,color:T.muted}}>{agentRunning?(agentStatus?.message||"Ready"):"Open START-AGENT.bat on your computer first"}</div>
+                <div style={{fontSize:11,color:T.muted}}>{agentRunning?(agentStatus?.message||"Ready"):"Open Revora.exe on your computer first"}</div>
               </div>
               <button style={{...btnS,fontSize:10,marginLeft:"auto"}} onClick={checkAgent}>↺ Check</button>
             </div>
