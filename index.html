@@ -346,6 +346,15 @@ function App() {
 
       if(error) throw new Error(error.message);
 
+      // Write to comm_log immediately so Recent Ads shows up right away
+      await sb.from("comm_log").insert([{
+        rep_id: user.id,
+        vehicle_id: agentVehicle.id || agentVehicle.stock,
+        action: "posted_to_facebook",
+        note: [agentVehicle.year, agentVehicle.make, agentVehicle.model].filter(Boolean).join(" "),
+        created_at: new Date().toISOString()
+      }]);
+
       setAgentMsg({t:"🚀 Job sent to Revora Agent! Chrome will open automatically on your computer.",type:"success"});
 
       // Poll Supabase for job status updates
