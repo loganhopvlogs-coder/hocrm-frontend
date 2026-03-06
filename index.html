@@ -346,17 +346,38 @@ function App() {
 
   const confirmAgent = async () => {
     try{
-      const r = await fetch(AGENT_URL+"/confirm",{method:"POST"});
-      const j = await r.json();
-      if(!j.success) throw new Error(j.error);
-      setAgentMsg({t:"🚀 Confirmed! Agent is posting now…",type:"success"});
+      // Find the latest in_progress or review job for this user and mark confirmed
+      const { data: jobs } = await sb
+        .from("jobs")
+        .select("id")
+        .eq("rep_id", user.id)
+        .in("status", ["review", "in_progress"])
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (jobs?.length) {
+        await sb.from("jobs").update({ confirmed: true, status: "complete" }).eq("id", jobs[0].id);
+        setAgentMsg({t:"✅ Posted! Ad is now live on Facebook Marketplace.",type:"success"});
+        if(agentPollIv){ clearInterval(agentPollIv); setAgentPollIv(null); }
+      } else {
+        setAgentMsg({t:"No active job found to confirm.",type:"error"});
+      }
     }catch(e){ setAgentMsg({t:"❌ "+e.message,type:"error"}); }
   };
 
   const stopAgent = async () => {
     try{
-      await fetch(AGENT_URL+"/stop",{method:"POST"});
-      setAgentMsg({t:"⏹ Agent stopped.",type:"success"});
+      // Cancel the active job in Supabase
+      const { data: jobs } = await sb
+        .from("jobs")
+        .select("id")
+        .eq("rep_id", user.id)
+        .in("status", ["pending", "in_progress", "review"])
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (jobs?.length) {
+        await sb.from("jobs").update({ status: "cancelled" }).eq("id", jobs[0].id);
+      }
+      setAgentMsg({t:"⏹ Job cancelled.",type:"success"});
       if(agentPollIv){ clearInterval(agentPollIv); setAgentPollIv(null); }
       await checkAgent();
     }catch(e){ setAgentMsg({t:"❌ Could not reach agent.",type:"error"}); }
@@ -1542,8 +1563,8 @@ function App() {
             <div style={{...card,background:agentRunning?"rgba(52,199,89,.08)":"rgba(230,57,70,.08)",border:`1px solid ${agentRunning?"rgba(52,199,89,.3)":"rgba(230,57,70,.3)"}`,marginBottom:16,padding:"10px 14px",display:"flex",alignItems:"center",gap:10}}>
               <div style={{width:8,height:8,borderRadius:"50%",background:agentRunning?"#34C759":"#E63946",flexShrink:0}}></div>
               <div>
-                <div style={{fontSize:12,fontWeight:700,color:agentRunning?"#34C759":"#E63946"}}>{agentRunning?"Agent Running":"Agent Offline"}</div>
-                <div style={{fontSize:11,color:T.muted}}>{agentRunning?(agentStatus?.message||"Ready"):"Open Revora.exe on your computer first"}</div>
+                <div style={{fontSize:12,fontWeight:700,color:agentRunning?"#34C759":"#E63946"}}>{agentRunning?"Revora Agent Running":"Revora Agent Offline"}</div>
+                <div style={{fontSize:11,color:T.muted}}>{agentRunning ? "🟢 Revora Agent connected" : "Open Revora.exe on your computer to enable"}</div>
               </div>
               <button style={{...btnS,fontSize:10,marginLeft:"auto"}} onClick={checkAgent}>↺ Check</button>
             </div>
