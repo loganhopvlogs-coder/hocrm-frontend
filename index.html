@@ -265,21 +265,47 @@ function App() {
   // ── Agent functions ──────────────────────────────────────────
   const checkAgent = async () => {
     try{
-      // Check if Revora EXE is active by looking at last_seen in users table
-      const { data } = await sb
+      console.log("[checkAgent] checking user.id:", user?.id);
+
+      const { data, error } = await sb
         .from("users")
-        .select("last_seen, status")
+        .select("last_seen, status, email")
         .eq("id", user.id)
         .single();
 
-      const lastSeen = data?.last_seen ? new Date(data.last_seen) : null;
-      const secondsAgo = lastSeen ? (Date.now() - lastSeen.getTime()) / 1000 : 999;
-      const alive = secondsAgo < 30; // EXE heartbeats every 5s — 30s timeout
+      console.log("[checkAgent] data:", data, "error:", error);
 
+      if (error || !data) {
+        console.warn("[checkAgent] query failed:", error?.message);
+        setAgentRunning(false);
+        setAgentStatusUI(null);
+        return false;
+      }
+
+      const lastSeen = data?.last_seen ? new Date(data.last_seen) : null;
+      const secondsAgo = lastSeen ? (Date.now() - lastSeen.getTime()) / 1000 : 9999;
+
+      console.log("[checkAgent] last_seen:", data?.last_seen, "secondsAgo:", Math.round(secondsAgo));
+
+      const alive = secondsAgo < 30;
       setAgentRunning(alive);
       setAgentStatusUI(alive ? { state: "ready", lastSeen: data?.last_seen } : null);
+
+      if (!alive && lastSeen) {
+        // Show how long ago it was last seen
+        setAgentMsg({
+          t: `Revora last seen ${Math.round(secondsAgo)}s ago — is Revora.exe running?`,
+          type: "error"
+        });
+      }
+
       return alive;
-    }catch(e){ setAgentRunning(false); setAgentStatusUI(null); return false; }
+    }catch(e){
+      console.error("[checkAgent] exception:", e.message);
+      setAgentRunning(false);
+      setAgentStatusUI(null);
+      return false;
+    }
   };
 
   const openAgentPanel = async (vehicle) => {
