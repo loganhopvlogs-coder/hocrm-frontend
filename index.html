@@ -313,6 +313,7 @@ function App() {
     setAgentFeatures("");
     setAgentNote("");
     setAgentMsg({t:"",type:""});
+    setAgentStatusUI(null); // reset — don't carry over state from previous session
     setShowAgent(true);
     await checkAgent();
   };
@@ -357,12 +358,20 @@ function App() {
 
         if(job?.status === "complete"){
           clearInterval(iv);
+          setAgentStatusUI({ state: "complete" });
           setAgentMsg({t:"✅ Posted successfully to Facebook Marketplace!",type:"success"});
         } else if(job?.status === "failed"){
           clearInterval(iv);
+          setAgentStatusUI({ state: "error" });
           setAgentMsg({t:"❌ Post failed: " + (job?.result?.error || "Unknown error"),type:"error"});
+        } else if(job?.status === "cancelled"){
+          clearInterval(iv);
+          setAgentStatusUI({ state: "idle" });
         } else if(job?.status === "review"){
+          setAgentStatusUI({ state: "review", message: "👀 Review & confirm in Chrome" });
           setAgentMsg({t:"👀 Review the listing in Chrome — then click Confirm to publish.",type:"info"});
+        } else if(job?.status === "in_progress"){
+          setAgentStatusUI({ state: "posting", message: "🤖 Agent is filling the form…" });
         }
       }, 3000);
       setAgentPollIv(iv);
@@ -1639,7 +1648,7 @@ function App() {
               <div style={{fontSize:11,color:T.muted,marginBottom:5,fontWeight:600}}>CUSTOM NOTE <span style={{fontWeight:400}}>(optional)</span></div>
               <textarea style={{...inp,width:"100%",minHeight:60,fontSize:12,resize:"vertical"}} placeholder="e.g. Clean title, no accidents, one owner..." value={agentNote} onChange={e=>setAgentNote(e.target.value)}/>
             </div>
-            {agentStatus?.state&&!["idle","complete","error"].includes(agentStatus.state)&&(
+            {agentStatus?.state&&!["idle","complete","error","ready"].includes(agentStatus.state)&&(
               <div style={{marginBottom:14}}>
                 <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
                   <span style={{fontSize:11,color:T.muted}}>{agentStatus.message}</span>
@@ -1671,7 +1680,7 @@ function App() {
                     <button style={{...btnP,background:"#E63946"}} onClick={stopAgent}>⏹ Cancel</button>
                   </div>
                 </div>
-              ):agentStatus?.state&&!["idle","complete","error"].includes(agentStatus.state)?(
+              ):agentStatus?.state&&!["idle","complete","error","ready"].includes(agentStatus.state)?(
                 <button style={{...btnP,background:"#E63946",flex:1}} onClick={stopAgent}>⏹ Stop Agent</button>
               ):(
                 (()=>{
