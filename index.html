@@ -265,11 +265,20 @@ function App() {
   // ── Agent functions ──────────────────────────────────────────
   const checkAgent = async () => {
     try{
-      const r = await fetch(AGENT_URL+"/status",{signal:AbortSignal.timeout(2000)});
-      const j = await r.json();
-      setAgentRunning(true);
-      setAgentStatusUI(j);
-      return true;
+      // Check if Revora EXE is active by looking at last_seen in users table
+      const { data } = await sb
+        .from("users")
+        .select("last_seen, status")
+        .eq("id", user.id)
+        .single();
+
+      const lastSeen = data?.last_seen ? new Date(data.last_seen) : null;
+      const secondsAgo = lastSeen ? (Date.now() - lastSeen.getTime()) / 1000 : 999;
+      const alive = secondsAgo < 30; // EXE heartbeats every 5s — 30s timeout
+
+      setAgentRunning(alive);
+      setAgentStatusUI(alive ? { state: "ready", lastSeen: data?.last_seen } : null);
+      return alive;
     }catch(e){ setAgentRunning(false); setAgentStatusUI(null); return false; }
   };
 
@@ -285,27 +294,53 @@ function App() {
   const startAgentJob = async () => {
     if(!agentVehicle) return;
     setAgentMsg({t:"",type:""});
-    const alive = await checkAgent();
-    if(!alive){
-      setAgentMsg({t:"❌ Agent not running. Open START-AGENT.bat on your computer first.",type:"error"});
-      return;
-    }
+
     try{
-      const jobId = "job_"+Date.now();
       const photos = (vPhotos[agentVehicle.stock]||[]).map(p=>p.url||p.data_url).filter(Boolean);
-      const r = await fetch(AGENT_URL+"/post",{
-        method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({vehicle:agentVehicle, features:agentFeatures, customNote:agentNote, photos, jobId})
-      });
-      const j = await r.json();
-      if(!j.success) throw new Error(j.error);
-      setAgentMsg({t:"🚀 Agent started! Watch the browser window that opens on your computer.",type:"success"});
-      // Start polling status
+
+      // Write job to Supabase — Revora EXE picks it up via heartbeat
+      const { data, error } = await sb
+        .from("jobs")
+        .insert([{
+          rep_id: user.id,
+          vehicle_id: agentVehicle.id || agentVehicle.stock,
+          status: "pending",
+          payload: {
+            vehicle: agentVehicle,
+            features: agentFeatures,
+            customNote: agentNote,
+            photos,
+            exterior_color: agentVehicle.exterior_color || "",
+            interior_color: agentVehicle.interior_color || ""
+          }
+        }])
+        .select()
+        .single();
+
+      if(error) throw new Error(error.message);
+
+      setAgentMsg({t:"🚀 Job sent to Revora Agent! Chrome will open automatically on your computer.",type:"success"});
+
+      // Poll Supabase for job status updates
       const iv = setInterval(async()=>{
-        const alive2 = await checkAgent();
-        if(!alive2){ clearInterval(iv); setAgentPollIv(null); }
+        const { data: job } = await sb
+          .from("jobs")
+          .select("status,result")
+          .eq("id", data.id)
+          .single();
+
+        if(job?.status === "complete"){
+          clearInterval(iv);
+          setAgentMsg({t:"✅ Posted successfully to Facebook Marketplace!",type:"success"});
+        } else if(job?.status === "failed"){
+          clearInterval(iv);
+          setAgentMsg({t:"❌ Post failed: " + (job?.result?.error || "Unknown error"),type:"error"});
+        } else if(job?.status === "review"){
+          setAgentMsg({t:"👀 Review the listing in Chrome — then click Confirm to publish.",type:"info"});
+        }
       }, 3000);
       setAgentPollIv(iv);
+
     }catch(e){ setAgentMsg({t:"❌ "+e.message,type:"error"}); }
   };
 
