@@ -366,30 +366,53 @@ function App() {
 
       setAgentMsg({t:"🚀 Job sent to Revora Agent! Chrome will open automatically on your computer.",type:"success"});
 
-      // Poll Supabase for job status updates
+      // Poll Supabase for job status updates — timeout after 10 minutes
+      let pollCount = 0;
+      const MAX_POLLS = 200; // 200 × 3s = 10 minutes
       const iv = setInterval(async()=>{
-        const { data: job } = await sb
-          .from("jobs")
-          .select("status,result")
-          .eq("id", data.id)
-          .single();
+        pollCount++;
 
-        if(job?.status === "complete"){
-          clearInterval(iv);
-          setAgentStatusUI({ state: "complete" });
-          setAgentMsg({t:"✅ Posted successfully to Facebook Marketplace!",type:"success"});
-        } else if(job?.status === "failed"){
+        // Timeout safety — stop polling after 10 minutes
+        if (pollCount > MAX_POLLS) {
           clearInterval(iv);
           setAgentStatusUI({ state: "error" });
-          setAgentMsg({t:"❌ Post failed: " + (job?.result?.error || "Unknown error"),type:"error"});
-        } else if(job?.status === "cancelled"){
-          clearInterval(iv);
-          setAgentStatusUI({ state: "idle" });
-        } else if(job?.status === "review"){
-          setAgentStatusUI({ state: "review", message: "👀 Review & confirm in Chrome" });
-          setAgentMsg({t:"👀 Review the listing in Chrome — then click Confirm to publish.",type:"info"});
-        } else if(job?.status === "in_progress"){
-          setAgentStatusUI({ state: "posting", message: "🤖 Agent is filling the form…" });
+          setAgentMsg({t:"⏱ Agent timed out — please check Chrome and try again.",type:"error"});
+          return;
+        }
+
+        try {
+          const { data: job, error: jobErr } = await sb
+            .from("jobs")
+            .select("status,result")
+            .eq("id", data.id)
+            .single();
+
+          if(jobErr) {
+            // Supabase timeout or connection error — keep trying, don't crash
+            console.warn("Poll error:", jobErr.message);
+            return;
+          }
+
+          if(job?.status === "complete"){
+            clearInterval(iv);
+            setAgentStatusUI({ state: "complete" });
+            setAgentMsg({t:"✅ Posted successfully to Facebook Marketplace!",type:"success"});
+          } else if(job?.status === "failed"){
+            clearInterval(iv);
+            setAgentStatusUI({ state: "error" });
+            setAgentMsg({t:"❌ Post failed: " + (job?.result?.error || "Unknown error"),type:"error"});
+          } else if(job?.status === "cancelled"){
+            clearInterval(iv);
+            setAgentStatusUI({ state: "idle" });
+          } else if(job?.status === "review"){
+            setAgentStatusUI({ state: "review", message: "👀 Review & confirm in Chrome" });
+            setAgentMsg({t:"👀 Review the listing in Chrome — then click Confirm to publish.",type:"info"});
+          } else if(job?.status === "in_progress"){
+            setAgentStatusUI({ state: "posting", message: "🤖 Agent is filling the form…" });
+          }
+        } catch(pollEx) {
+          console.warn("Poll exception:", pollEx.message);
+          // Don't crash — just wait for next poll
         }
       }, 3000);
       setAgentPollIv(iv);
@@ -852,10 +875,24 @@ function App() {
   const invLocs=["All",...Array.from(new Set(inv.map(v=>v.location).filter(Boolean))).sort()];
   const filtInv=useMemo(()=>{
     let d=[...inv];
-    if(iFilter!=="All")d=d.filter(v=>v.type===iFilter);
-    if(iLoc!=="All")d=d.filter(v=>v.location===iLoc);
-    if(iSearch){const q=iSearch.toLowerCase();d=d.filter(v=>(v.make+" "+v.model+" "+v.year+" "+v.stock+" "+v.location).toLowerCase().includes(q));}
-    d.sort((a,b)=>{let av=a[iSort.col],bv=b[iSort.col];if(typeof av==="string"){av=av.toLowerCase();bv=bv.toLowerCase();}return iSort.dir==="asc"?(av>bv?1:-1):(av<bv?1:-1);});
+    // Type filter
+    if(iFilter!=="All") d=d.filter(v=>v.type===iFilter);
+    // Location filter — handle null/undefined locations
+    if(iLoc!=="All") d=d.filter(v=>(v.location||"").trim()===iLoc.trim());
+    // Search — safely handle null fields
+    if(iSearch){
+      const q=iSearch.toLowerCase();
+      d=d.filter(v=>[v.make,v.model,v.year,v.stock,v.location,v.exterior_color].map(x=>x||"").join(" ").toLowerCase().includes(q));
+    }
+    // Sort — safely handle null/undefined values
+    d.sort((a,b)=>{
+      let av=a[iSort.col]??("" );
+      let bv=b[iSort.col]??("" );
+      if(typeof av==="string"){ av=av.toLowerCase(); bv=(bv+"").toLowerCase(); }
+      if(typeof av==="number"){ bv=Number(bv)||0; }
+      if(av===bv) return 0;
+      return iSort.dir==="asc"?(av>bv?1:-1):(av<bv?1:-1);
+    });
     return d;
   },[inv,iFilter,iLoc,iSearch,iSort]);
   const toggleSort=col=>setISort(s=>({col,dir:s.col===col&&s.dir==="asc"?"desc":"asc"}));
