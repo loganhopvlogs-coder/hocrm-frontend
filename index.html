@@ -88,10 +88,22 @@ const THEMES = {
   white: {name:"Clean White",bg:"#FFFFFF",surface:"#F8F9FA",border:"#DEE2E6",text:"#212529",muted:"#6C757D",accent:"#E63946",nav:"#FFFFFF", input:"#FFFFFF", inputBorder:"#CED4DA"},
 };
 
+function guessType(make, model) {
+  const m = ((make||"") + " " + (model||"")).toLowerCase();
+  if (/(f-?150|f-?250|f-?350|silverado|sierra|ram|tundra|tacoma|ranger|colorado|canyon|frontier|titan|ridgeline|maverick|f150|f250|f350)/.test(m)) return "Truck";
+  if (/(suv|rav4|cr-v|crv|rogue|escape|equinox|explorer|pilot|highlander|4runner|pathfinder|murano|cx-5|cx5|tucson|santa fe|sportage|sorento|telluride|traverse|blazer|edge|bronco|wrangler|cherokee|grand cherokee|durango|tahoe|suburban|yukon|escalade|navigator|expedition|qx60|qx80|mdx|rdx|rxl|nx|gx|lx|rx|q5|q7|x3|x5|x7|glc|gle|gls|glb|gla|tiguan|atlas|touareg|outback|forester|ascent|crosstrek|compass|meridian|murano|armada|infiniti)/.test(m)) return "SUV";
+  if (/(van|caravan|odyssey|sienna|town|country|transit|express|savana|nv|pacifica|voyager)/.test(m)) return "Van";
+  if (/(hatchback|hatch|golf|fit|yaris|versa|sentra|civic|corolla|accent|rio|spark|sonic|cruze|jetta|impreza|mazda3|elantra|focus|fiesta|prius)/.test(m)) return "Hatchback";
+  if (/(coupe|mustang|camaro|challenger|charger|corvette|370z|86|brz|wrx|sti)/.test(m)) return "Coupe";
+  return "Sedan";
+}
 function normalizeV(v,i){
+  const type = v.bodyType || v.type || guessType(v.make, v.model);
   return {id:i+1,stock:v.stock||"HOC-"+i,year:v.year||0,make:v.make||"",model:v.model||"",
-    price:v.price||0,mileage:v.mileage||"",location:v.location||"",type:v.bodyType||v.type||"",
-    color:v.color||"",image:v.image||"",listingUrl:v.listingUrl||v.url||"",condition:v.condition||"Used"};
+    price:v.price||0,mileage:v.mileage||"",location:v.location||"",type,
+    color:v.color||v.exterior_color||"",image:v.image||"",
+    listingUrl:v.listingUrl||v.listing_url||v.url||"",condition:v.condition||"Used",
+    exterior_color:v.exterior_color||v.color||"",interior_color:v.interior_color||""};
 }
 
 function buildAd(v, features, intro){
@@ -1398,7 +1410,7 @@ function App() {
                 {invTypes.map(t=><button key={t} onClick={()=>setIFilter(t)} style={{...btnS,fontSize:11,padding:"4px 9px",background:iFilter===t?T.accent:"rgba(128,128,128,.08)",color:iFilter===t?"#fff":T.muted,borderColor:iFilter===t?T.accent:T.border}}>{t}</button>)}
               </div>
               <select style={{...inp,width:"auto",minWidth:140,fontSize:12,padding:"6px 10px"}} value={iLoc} onChange={e=>setILoc(e.target.value)}>
-                {invLocs.map(l=><option key={l}>{l==="All"?"All Locations":"📍 "+l}</option>)}
+                {invLocs.map(l=><option key={l} value={l}>{l==="All"?"All Locations":"📍 "+l}</option>)}
               </select>
             </div>
             {!invLoad&&(
