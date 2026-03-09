@@ -136,7 +136,16 @@ function App() {
   const [customAccent, setCustomAccent] = useState("");
 
   // Auth
-  const [lf, setLf]     = useState({email:"",password:""});
+  const [lf, setLf]     = useState(() => {
+    try {
+      const e = localStorage.getItem('revora_saved_email') || "";
+      const p = localStorage.getItem('revora_saved_pw') || "";
+      return { email: e, password: p };
+    } catch(e) { return { email: "", password: "" }; }
+  });
+  const [rememberMe, setRememberMe] = useState(() => {
+    try { return !!localStorage.getItem('revora_saved_email'); } catch(e) { return false; }
+  });
   const [sf, setSf]     = useState({firstName:"",lastName:"",email:"",location:"",role:"Sales",password:"",confirm:""});
   const [fgEmail, setFgEmail] = useState("");
   const [aErr, setAErr] = useState("");
@@ -607,6 +616,8 @@ function App() {
     let t={...THEMES[savedTheme]||THEMES.dark};
     if(savedAccent)t={...t,accent:savedAccent};
     setT(t);setThemeKey(savedTheme);setCustomAccent(savedAccent||t.accent);setAccentInput(savedAccent||t.accent);
+    // Save credentials for next time
+    try { localStorage.setItem('revora_saved_email', lf.email.toLowerCase().trim()); localStorage.setItem('revora_saved_pw', lf.password); } catch(e) {}
     setUser(data);setScreen("app");setALoad(false);
   };
   const doSignup = async () => {
@@ -894,6 +905,19 @@ function App() {
               </div>
             </div>
             <button onClick={()=>{setScreen("forgot");setAErr("");setAMsg("");}} style={{background:"none",border:"none",color:"#E63946",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans'",textAlign:"right",padding:0}}>Forgot password?</button>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",margin:"4px 0 8px"}}>
+              <label style={{display:"flex",alignItems:"center",gap:6,fontSize:12,color:"#8888A0",cursor:"pointer"}}>
+                <input type="checkbox" checked={rememberMe} onChange={e=>{
+                  setRememberMe(e.target.checked);
+                  if(!e.target.checked){ try{localStorage.removeItem('revora_saved_email');localStorage.removeItem('revora_saved_pw');}catch(e){} }
+                }} style={{accentColor:"#E63946"}}/>
+                Remember me
+              </label>
+              {rememberMe && <span style={{fontSize:11,color:"#555570",cursor:"pointer"}} onClick={()=>{
+                try{localStorage.removeItem('revora_saved_email');localStorage.removeItem('revora_saved_pw');}catch(e){}
+                setLf({email:"",password:""});setRememberMe(false);
+              }}>Clear saved</span>}
+            </div>
             <button style={{...btnP,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8}} onClick={doLogin} disabled={aLoad}>
               {aLoad?<><span className="spin"></span>Signing in…</>:"Sign In"}
             </button>
@@ -1004,7 +1028,10 @@ function App() {
             {(user?.first_name?.[0]||"")+(user?.last_name?.[0]||"")}
           </div>
           <button onClick={()=>{setEditName({first:user?.first_name||"",last:user?.last_name||""});setSettingsOpen(true);}} style={{background:"none",border:"none",cursor:"pointer",fontSize:15,color:T.muted,padding:2}}>⚙️</button>
-          <button style={{...btnS,fontSize:11,padding:"5px 10px"}} onClick={()=>{setScreen("login");setUser(null);setInv([]);setClients([]);setPosts([]);}}>Out</button>
+          <button style={{...btnS,fontSize:11,padding:"5px 10px"}} onClick={()=>{
+  try { localStorage.removeItem('revora_session'); localStorage.removeItem('revora_saved_email'); localStorage.removeItem('revora_saved_pw'); } catch(e) {}
+  setScreen("login");setUser(null);setInv([]);setClients([]);setPosts([]);
+}}>Out</button>
         </div>
       </div>
 
